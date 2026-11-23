@@ -44,7 +44,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyDG5B4yI8jTDWxX8B3g8QCxKzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
+const firebaseConfig={apiKey:"AIzaSyDG5B4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null,registrationInProgress=false;
