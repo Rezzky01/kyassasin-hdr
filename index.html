@@ -22,9 +22,9 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
 <section id="auth" class="card">
  <div class="tabs"><button id="showLogin">Login</button><button class="secondary" id="showRegister">Daftar</button></div>
- <div id="loginBox"><h2>Masuk akun</h2><input id="loginEmail" type="email" placeholder="Alamat email"><input id="loginPass" type="password" placeholder="Password"><button id="loginBtn">Login</button></div>
- <div id="registerBox" class="hidden"><h2>Buat akun</h2><input id="regEmail" type="email" placeholder="Alamat email"><input id="regPass" type="password" placeholder="Password (minimal 6 karakter)"><button id="registerBtn">Daftar & kirim verifikasi</button></div>
- <div id="authMsg" class="status">Pengguna biasa wajib verifikasi email. Akun admin yang ditetapkan dapat melewati verifikasi email.</div>
+ <div id="loginBox"><h2>Masuk akun</h2><input id="loginEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="loginBtn">Login</button><button id="resetBtn" class="secondary">Lupa password? Kirim link reset</button></div>
+ <div id="registerBox" class="hidden"><h2>Buat akun</h2><input id="regEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="regPass" type="password" placeholder="Password (minimal 6 karakter)" autocomplete="new-password"><button id="registerBtn">Daftar & kirim verifikasi</button></div>
+ <div id="authMsg" class="status">Pengguna biasa wajib verifikasi email. Akun admin yang ditetapkan dapat melewati verifikasi email. Jika email sudah terdaftar tetapi lupa password, gunakan tombol reset password.</div>
 </section>
 <section id="app" class="hidden">
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
@@ -37,43 +37,152 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna yang sudah login. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
  <section id="page-vip" class="page hidden"><div class="card"><h2>Keanggotaan VIP</h2><p id="vipState">Memuat status VIP...</p><p class="muted">Mau VIP? Hubungi admin 6285352860012</p></div></section>
  <section id="page-settings" class="page hidden"><div class="card"><h2>Pilih tema</h2><select id="theme"><option value="dark">Hitam</option><option value="light">Putih</option><option value="purple">Ungu gelap</option><option value="red">Merah</option></select></div></section>
- <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Aksi admin divalidasi oleh Firestore Rules berdasarkan dokumen admins/{uid}.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
+ <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Aksi admin divalidasi oleh Firestore Rules berdasarkan UID administrator.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
 </section>
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,signOut,onAuthStateChanged, reload} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyDGb5F4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
+const firebaseConfig={apiKey:"AIzaSyDG5B4yI8jTDWxX8B3g8QCxKzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
-const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
+const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null,registrationInProgress=false;
 const say=(id,t)=>$(id).textContent=t;
 $("#showLogin").onclick=()=>{$("#loginBox").classList.remove("hidden");$("#registerBox").classList.add("hidden")};
 $("#showRegister").onclick=()=>{$("#registerBox").classList.remove("hidden");$("#loginBox").classList.add("hidden")};
-$("#registerBtn").onclick=async()=>{try{let c=await createUserWithEmailAndPassword(auth,$("#regEmail").value.trim(),$("#regPass").value);await setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,email:c.user.email,role:"user",vip:false,blocked:false,createdAt:serverTimestamp()});await sendEmailVerification(c.user);await signOut(auth);say("#authMsg","Akun dibuat. Verifikasi email dari kotak masuk, lalu login.");}catch(e){say("#authMsg","Gagal daftar: "+e.message)}};
-$("#loginBtn").onclick=async()=>{try{await signInWithEmailAndPassword(auth,$("#loginEmail").value.trim(),$("#loginPass").value)}catch(e){say("#authMsg","Gagal login: "+e.message)}};
+
+$("#resetBtn").onclick=async()=>{
+ const email=$("#loginEmail").value.trim();
+ if(!email){say("#authMsg","Masukkan alamat email terlebih dahulu, lalu tekan Lupa password.");return}
+ try{await sendPasswordResetEmail(auth,email);say("#authMsg","Link reset password sudah dikirim ke "+email+". Periksa Inbox dan folder Spam.");}
+ catch(e){say("#authMsg","Gagal mengirim reset password: "+friendlyError(e))}
+};
+
+function friendlyError(e){
+ const code=e?.code||"";
+ if(code==="auth/email-already-in-use")return "Email ini sudah terdaftar. Kembali ke Login, masukkan email, lalu tekan Lupa password jika password tidak ingat.";
+ if(code==="auth/invalid-email")return "Format email tidak valid.";
+ if(code==="auth/weak-password")return "Password minimal 6 karakter.";
+ if(code==="auth/invalid-credential"||code==="auth/wrong-password"||code==="auth/user-not-found")return "Email atau password salah. Jika lupa password, gunakan tombol Lupa password.";
+ if(code==="auth/too-many-requests")return "Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.";
+ if(code==="auth/network-request-failed")return "Koneksi internet bermasalah. Periksa internet lalu coba lagi.";
+ return e?.message||"Terjadi kesalahan yang tidak diketahui.";
+}
+
+$("#registerBtn").onclick=async()=>{
+ const email=$("#regEmail").value.trim(),password=$("#regPass").value;
+ if(!email||!password){say("#authMsg","Isi email dan password terlebih dahulu.");return}
+ if(password.length<6){say("#authMsg","Password minimal 6 karakter.");return}
+ registrationInProgress=true;let credential=null;
+ try{
+  credential=await createUserWithEmailAndPassword(auth,email,password);
+  try{
+   await setDoc(doc(db,"users",credential.user.uid),{uid:credential.user.uid,email:credential.user.email,role:"user",vip:false,blocked:false,createdAt:serverTimestamp()});
+  }catch(profileError){
+   try{await sendEmailVerification(credential.user)}catch(_){}
+   await signOut(auth);
+   say("#authMsg","Akun login berhasil dibuat, tetapi profil database belum tersimpan: "+friendlyError(profileError)+". Email verifikasi dicoba dikirim. Setelah verifikasi, login kembali; aplikasi akan mencoba membuat profil lagi.");
+   return;
+  }
+  await sendEmailVerification(credential.user);
+  await signOut(auth);
+  say("#authMsg","Akun berhasil dibuat. Buka email untuk verifikasi, lalu login. Jika email tidak terlihat, periksa folder Spam.");
+ }catch(e){
+  if(credential&&auth.currentUser){try{await signOut(auth)}catch(_){}}
+  say("#authMsg","Gagal daftar: "+friendlyError(e));
+ }finally{registrationInProgress=false}
+};
+
+$("#loginBtn").onclick=async()=>{
+ try{await signInWithEmailAndPassword(auth,$("#loginEmail").value.trim(),$("#loginPass").value)}
+ catch(e){say("#authMsg","Gagal login: "+friendlyError(e))}
+};
 $("#logout").onclick=()=>signOut(auth);
-onAuthStateChanged(auth,async u=>{if(unsubChat){unsubChat();unsubChat=null}if(!u){currentUser=null;$("#auth").classList.remove("hidden");$("#app").classList.add("hidden");return}
+
+onAuthStateChanged(auth,async u=>{
+ if(unsubChat){unsubChat();unsubChat=null}
+ if(!u){currentUser=null;isAdmin=false;$("#auth").classList.remove("hidden");$("#app").classList.add("hidden");return}
  currentUser=u;isAdmin=u.uid===ADMIN_UID;
- try{await reload(u);if(!isAdmin&&!u.emailVerified){await signOut(auth);say("#authMsg","Email belum diverifikasi. Verifikasi email lalu login kembali.");return}
- const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
- if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:u.email,role:isAdmin?"admin":"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
- const profile=(await getDoc(userRef)).data()||{};
- if(profile.blocked&&!isAdmin){await signOut(auth);say("#authMsg","Akun ini diblokir. Hubungi admin.");return}
- $("#auth").classList.add("hidden");$("#app").classList.remove("hidden");$("#who").textContent=u.email||"Pengguna";$("#role").textContent=isAdmin?"Administrator":(profile.vip?"Pengguna VIP":"Pengguna terverifikasi");
- $("#adminNav").classList.toggle("hidden",!isAdmin);say("#vipState",profile.vip?"Status: VIP aktif":"Status: pengguna reguler");
- if(isAdmin)loadUsers();startChat();
- }catch(e){say("#authMsg","Tidak dapat memuat profil: "+e.message)}});
-document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));$("#page-"+b.dataset.page).classList.remove("hidden");if(b.dataset.page==="admin"&&isAdmin)loadUsers()});
-function startChat(){const q=query(collection(db,"messages"),orderBy("createdAt","desc"),limit(80));unsubChat=onSnapshot(q,s=>{let items=s.docs.map(d=>({id:d.id,...d.data()})).reverse();$("#chatlog").innerHTML="";for(const m of items){let el=document.createElement("div");el.className="bubble"+(m.uid===currentUser.uid?" mine":"");let b=document.createElement("b");b.textContent=m.email||"Pengguna";let p=document.createElement("div");p.textContent=m.text||"";let small=document.createElement("span");small.className="small";small.textContent=m.createdAt?.toDate?m.createdAt.toDate().toLocaleString("id-ID"):"baru saja";el.append(b,p,small);$("#chatlog").append(el)}$("#chatlog").scrollTop=$("#chatlog").scrollHeight},e=>say("#chatMsg","Chat gagal dimuat: "+e.message))}
-$("#sendChat").onclick=async()=>{let text=$("#chatText").value.trim();if(!text)return;try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:currentUser.email,text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}catch(e){say("#chatMsg","Tidak dapat mengirim: "+e.message)}};
-async function loadUsers(){try{say("#adminMsg","Memuat pengguna...");let s=await getDocs(query(collection(db,"users"),limit(100)));$("#usersList").innerHTML="";for(let d of s.docs){let u=d.data(),row=document.createElement("div");row.className="userrow";let title=document.createElement("b");title.textContent=u.email||u.uid;let info=document.createElement("div");info.className="small";info.textContent=(u.vip?"VIP":"Reguler")+" • "+(u.blocked?"Diblokir":"Aktif")+" • "+u.uid;let vip=document.createElement("button");vip.className="secondary";vip.textContent=u.vip?"Cabut VIP":"Berikan VIP";vip.onclick=()=>changeUser(d.id,{vip:!u.vip});let block=document.createElement("button");block.className="danger";block.textContent=u.blocked?"Buka blokir":"Blokir";block.onclick=()=>changeUser(d.id,{blocked:!u.blocked});row.append(title,info,vip,block);$("#usersList").append(row)}say("#adminMsg","Menampilkan maksimal 100 pengguna.")}catch(e){say("#adminMsg","Gagal memuat pengguna: "+e.message)}}
-async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),patch);loadUsers()}catch(e){say("#adminMsg","Aksi gagal: "+e.message)}}
+ try{
+  await reload(u);
+  if(!isAdmin&&!u.emailVerified){
+   if(registrationInProgress)return;
+   await signOut(auth);say("#authMsg","Email belum diverifikasi. Buka link verifikasi di email, lalu login kembali.");return
+  }
+  const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
+  if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:u.email,role:isAdmin?"admin":"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
+  const profile=(await getDoc(userRef)).data()||{};
+  if(profile.blocked&&!isAdmin){await signOut(auth);say("#authMsg","Akun ini diblokir. Hubungi admin.");return}
+  $("#auth").classList.add("hidden");$("#app").classList.remove("hidden");$("#who").textContent=u.email||"Pengguna";$("#role").textContent=isAdmin?"Administrator":(profile.vip?"Pengguna VIP":"Pengguna terverifikasi");
+  $("#adminNav").classList.toggle("hidden",!isAdmin);say("#vipState",profile.vip?"Status: VIP aktif":"Status: pengguna reguler");
+  if(isAdmin)loadUsers();startChat();
+ }catch(e){say("#authMsg","Tidak dapat memuat profil: "+friendlyError(e))}
+});
+
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+ $("#page-"+b.dataset.page).classList.remove("hidden");
+ if(b.dataset.page==="admin"&&isAdmin)loadUsers();
+});
+
+function startChat(){
+ const q=query(collection(db,"messages"),orderBy("createdAt","desc"),limit(80));
+ unsubChat=onSnapshot(q,s=>{
+  let items=s.docs.map(d=>({id:d.id,...d.data()})).reverse();$("#chatlog").innerHTML="";
+  for(const m of items){
+   let el=document.createElement("div");el.className="bubble"+(m.uid===currentUser.uid?" mine":"");
+   let b=document.createElement("b");b.textContent=m.email||"Pengguna";
+   let p=document.createElement("div");p.textContent=m.text||"";
+   let small=document.createElement("span");small.className="small";small.textContent=m.createdAt?.toDate?m.createdAt.toDate().toLocaleString("id-ID"):"baru saja";
+   el.append(b,p,small);$("#chatlog").append(el)
+  }
+  $("#chatlog").scrollTop=$("#chatlog").scrollHeight
+ },e=>say("#chatMsg","Chat gagal dimuat: "+friendlyError(e)));
+}
+$("#sendChat").onclick=async()=>{
+ let text=$("#chatText").value.trim();if(!text)return;
+ try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:currentUser.email,text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}
+ catch(e){say("#chatMsg","Tidak dapat mengirim: "+friendlyError(e))}
+};
+
+async function loadUsers(){
+ try{
+  say("#adminMsg","Memuat pengguna...");let s=await getDocs(query(collection(db,"users"),limit(100)));$("#usersList").innerHTML="";
+  for(let d of s.docs){
+   let u=d.data(),row=document.createElement("div");row.className="userrow";
+   let title=document.createElement("b");title.textContent=u.email||u.uid;
+   let info=document.createElement("div");info.className="small";info.textContent=(u.vip?"VIP":"Reguler")+" • "+(u.blocked?"Diblokir":"Aktif")+" • "+u.uid;
+   let vip=document.createElement("button");vip.className="secondary";vip.textContent=u.vip?"Cabut VIP":"Berikan VIP";vip.onclick=()=>changeUser(d.id,{vip:!u.vip});
+   let block=document.createElement("button");block.className="danger";block.textContent=u.blocked?"Buka blokir":"Blokir";block.onclick=()=>changeUser(d.id,{blocked:!u.blocked});
+   row.append(title,info,vip,block);$("#usersList").append(row)
+  }
+  say("#adminMsg","Menampilkan maksimal 100 pengguna.")
+ }catch(e){say("#adminMsg","Gagal memuat pengguna: "+friendlyError(e))}
+}
+async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),patch);loadUsers()}catch(e){say("#adminMsg","Aksi gagal: "+friendlyError(e))}}
+
 $("#theme").onchange=()=>document.documentElement.dataset.theme=$("#theme").value;
-let canvas=$("#canvas"),ctx=canvas.getContext("2d");$("#photoFile").onchange=e=>{let f=e.target.files[0];if(!f)return;selectedFile=f;let url=URL.createObjectURL(f),img=new Image();img.onload=()=>{sourceImage=img;canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);URL.revokeObjectURL(url)};img.src=url};
-$("#enhance").onclick=()=>{if(!sourceImage)return alert("Pilih foto dulu.");ctx.drawImage(sourceImage,0,0);let d=ctx.getImageData(0,0,canvas.width,canvas.height),a=Number($("#strength").value)/100;for(let i=0;i<d.data.length;i+=4)for(let c=0;c<3;c++)d.data[i+c]=Math.max(0,Math.min(255,(d.data[i+c]-128)*(1+a)+128));ctx.putImageData(d,0,0)};
-$("#savePhoto").onclick=()=>{if(!canvas.width)return alert("Pilih foto dulu.");canvas.toBlob(b=>{let a=document.createElement("a"),u=URL.createObjectURL(b);a.href=u;a.download="kyassasin-hdr.jpg";a.click();URL.revokeObjectURL(u)},"image/jpeg",.95)};
+let canvas=$("#canvas"),ctx=canvas.getContext("2d");
+$("#photoFile").onchange=e=>{
+ let f=e.target.files[0];if(!f)return;selectedFile=f;let url=URL.createObjectURL(f),img=new Image();
+ img.onload=()=>{sourceImage=img;canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);URL.revokeObjectURL(url)};
+ img.src=url
+};
+$("#enhance").onclick=()=>{
+ if(!sourceImage)return alert("Pilih foto dulu.");
+ ctx.drawImage(sourceImage,0,0);let d=ctx.getImageData(0,0,canvas.width,canvas.height),a=Number($("#strength").value)/100;
+ for(let i=0;i<d.data.length;i+=4)for(let c=0;c<3;c++)d.data[i+c]=Math.max(0,Math.min(255,(d.data[i+c]-128)*(1+a)+128));
+ ctx.putImageData(d,0,0)
+};
+$("#savePhoto").onclick=()=>{
+ if(!canvas.width)return alert("Pilih foto dulu.");
+ canvas.toBlob(b=>{if(!b)return alert("Gagal membuat gambar.");let a=document.createElement("a"),u=URL.createObjectURL(b);a.href=u;a.download="kyassasin-hdr.jpg";a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)},"image/jpeg",.95)
+};
 $("#videoFile").onchange=e=>{let f=e.target.files[0];if(f){selectedFile=f;$("#videoPreview").src=URL.createObjectURL(f)}};
-$("#shareBtn").onclick=async()=>{if(!selectedFile)return alert("Pilih foto/video dulu.");try{if(navigator.canShare?.({files:[selectedFile]}))await navigator.share({files:[selectedFile],title:"KYASSASIN HDR"});else alert("Simpan file lalu bagikan melalui galeri.")}catch(e){if(e.name!=="AbortError")alert(e.message)}};
+$("#shareBtn").onclick=async()=>{
+ if(!selectedFile)return alert("Pilih foto/video dulu.");
+ try{if(navigator.canShare?.({files:[selectedFile]}))await navigator.share({files:[selectedFile],title:"KYASSASIN HDR"});else alert("Simpan file lalu bagikan melalui galeri.")}
+ catch(e){if(e.name!=="AbortError")alert(e.message)}
+};
 </script></body></html>
