@@ -41,14 +41,14 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyDG5B4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:5163d76374bf1f24670011",measurementId:"G-LWMPJ5VBX7"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
-const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null,registrationInProgress=false;
+const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
 const say=(id,t)=>$(id).textContent=t;
-$("#showLogin").onclick=()=>{$("#loginBox").classList.remove("hidden");$("#registerBox").classList.add("hidden")};
+
 
 $("#resetBtn").onclick=async()=>{
  const email=$("#loginEmail").value.trim();
@@ -81,7 +81,6 @@ onAuthStateChanged(auth,async u=>{
  try{
   await reload(u);
   if(!isAdmin&&!u.emailVerified){
-   if(registrationInProgress)return;
    await signOut(auth);say("#authMsg","Email belum diverifikasi. Buka link verifikasi di email, lalu login kembali.");return
   }
   const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
