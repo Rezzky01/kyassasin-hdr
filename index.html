@@ -21,10 +21,9 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <body><div class="wrap">
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
 <section id="auth" class="card">
- <div class="tabs"><button id="showLogin">Login</button><button class="secondary" id="showRegister">Daftar</button></div>
+ <div class="tabs"><button id="showLogin">Login</button></div>
  <div id="loginBox"><h2>Masuk akun</h2><input id="loginEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="loginBtn">Login</button><button id="resetBtn" class="secondary">Lupa password? Kirim link reset</button></div>
- <div id="registerBox" class="hidden"><h2>Buat akun</h2><input id="regEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="regPass" type="password" placeholder="Password (minimal 6 karakter)" autocomplete="new-password"><button id="registerBtn">Daftar & kirim verifikasi</button></div>
- <div id="authMsg" class="status">Pengguna biasa wajib verifikasi email. Akun admin yang ditetapkan dapat melewati verifikasi email. Jika email sudah terdaftar tetapi lupa password, gunakan tombol reset password.</div>
+ <div id="authMsg" class="status">Login administrator. Pendaftaran akun baru dinonaktifkan. Jika lupa password, gunakan tombol reset password.</div>
 </section>
 <section id="app" class="hidden">
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
@@ -50,7 +49,6 @@ const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null,registrationInProgress=false;
 const say=(id,t)=>$(id).textContent=t;
 $("#showLogin").onclick=()=>{$("#loginBox").classList.remove("hidden");$("#registerBox").classList.add("hidden")};
-$("#showRegister").onclick=()=>{$("#registerBox").classList.remove("hidden");$("#loginBox").classList.add("hidden")};
 
 $("#resetBtn").onclick=async()=>{
  const email=$("#loginEmail").value.trim();
@@ -69,30 +67,6 @@ function friendlyError(e){
  if(code==="auth/network-request-failed")return "Koneksi internet bermasalah. Periksa internet lalu coba lagi.";
  return e?.message||"Terjadi kesalahan yang tidak diketahui.";
 }
-
-$("#registerBtn").onclick=async()=>{
- const email=$("#regEmail").value.trim(),password=$("#regPass").value;
- if(!email||!password){say("#authMsg","Isi email dan password terlebih dahulu.");return}
- if(password.length<6){say("#authMsg","Password minimal 6 karakter.");return}
- registrationInProgress=true;let credential=null;
- try{
-  credential=await createUserWithEmailAndPassword(auth,email,password);
-  try{
-   await setDoc(doc(db,"users",credential.user.uid),{uid:credential.user.uid,email:credential.user.email,role:"user",vip:false,blocked:false,createdAt:serverTimestamp()});
-  }catch(profileError){
-   try{await sendEmailVerification(credential.user)}catch(_){}
-   await signOut(auth);
-   say("#authMsg","Akun login berhasil dibuat, tetapi profil database belum tersimpan: "+friendlyError(profileError)+". Email verifikasi dicoba dikirim. Setelah verifikasi, login kembali; aplikasi akan mencoba membuat profil lagi.");
-   return;
-  }
-  await sendEmailVerification(credential.user);
-  await signOut(auth);
-  say("#authMsg","Akun berhasil dibuat. Buka email untuk verifikasi, lalu login. Jika email tidak terlihat, periksa folder Spam.");
- }catch(e){
-  if(credential&&auth.currentUser){try{await signOut(auth)}catch(_){}}
-  say("#authMsg","Gagal daftar: "+friendlyError(e));
- }finally{registrationInProgress=false}
-};
 
 $("#loginBtn").onclick=async()=>{
  try{await signInWithEmailAndPassword(auth,$("#loginEmail").value.trim(),$("#loginPass").value)}
