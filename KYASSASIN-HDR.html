@@ -43,7 +43,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyDG5B4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:5163d76374bf1f24670011",measurementId:"G-LWMPJ5VBX7"};
+const firebaseConfig={apiKey:"AIzaSyDQ9TD4fl8zWGo1V7m5jAGoWci-eFrXRwc",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:5163d76374bf1f24670011",measurementId:"G-LWMPJ5VBX7"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 // Simpan sesi login admin di perangkat ini agar tidak perlu login ulang setiap membuka aplikasi.
