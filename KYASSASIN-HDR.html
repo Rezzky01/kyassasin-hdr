@@ -29,7 +29,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
-  <div class="card"><h2>Penjernih foto</h2><input type="file" id="photoFile" accept="image/*"><label class="muted">Intensitas efek</label><input id="strength" type="range" min="0" max="100" value="35"><canvas id="canvas" class="preview"></canvas><div class="row"><button id="enhance">Terapkan HDR</button><button class="secondary" id="savePhoto">Simpan foto</button></div><p class="muted">Efek kontras sederhana di perangkat, bukan pemulihan detail asli.</p></div>
+  <div class="card"><h2>Penjernih foto otomatis</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto, KYASSASIN HDR akan otomatis memperjelas pencahayaan, kontras, dan warna. Tidak perlu mengatur apa pun.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto">Simpan foto jernih</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
   <div class="card"><h2>Pratinjau video</h2><input type="file" id="videoFile" accept="video/*"><video id="videoPreview" class="preview" controls></video><p class="muted">Versi ini hanya pratinjau video; ekspor video HDR belum tersedia.</p></div>
   <div class="card"><h2>Bagikan file</h2><button id="shareBtn" class="secondary">Bagikan file terpilih</button></div>
  </section>
@@ -139,16 +139,44 @@ async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),pat
 
 $("#theme").onchange=()=>document.documentElement.dataset.theme=$("#theme").value;
 let canvas=$("#canvas"),ctx=canvas.getContext("2d");
+function autoEnhance(img){
+ const scale=Math.min(1,2560/Math.max(img.naturalWidth,img.naturalHeight));
+ canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+ canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+ ctx.filter="contrast(1.10) saturate(1.08)";
+ ctx.drawImage(img,0,0,canvas.width,canvas.height);
+ ctx.filter="none";
+ const frame=ctx.getImageData(0,0,canvas.width,canvas.height),px=frame.data;
+ const hist=new Uint32Array(256);let count=0;
+ for(let i=0;i<px.length;i+=4){
+  const y=Math.round(.2126*px[i]+.7152*px[i+1]+.0722*px[i+2]);
+  hist[y]++;count++;
+ }
+ const cut=Math.floor(count*.012),top=Math.floor(count*.988);
+ let sum=0,lo=0,hi=255;
+ for(let n=0;n<256;n++){sum+=hist[n];if(sum>=cut){lo=n;break}}
+ sum=0;for(let n=0;n<256;n++){sum+=hist[n];if(sum>=top){hi=n;break}}
+ if(hi-lo<40){lo=Math.max(0,lo-8);hi=Math.min(255,hi+8)}
+ const range=Math.max(1,hi-lo);
+ for(let i=0;i<px.length;i+=4){
+  const y=.2126*px[i]+.7152*px[i+1]+.0722*px[i+2];
+  const target=24+((y-lo)/range)*207;
+  const gain=Math.max(.72,Math.min(1.35,target/Math.max(1,y)));
+  for(let c=0;c<3;c++)px[i+c]=Math.max(0,Math.min(255,Math.round(px[i+c]*gain)));
+ }
+ ctx.putImageData(frame,0,0);
+}
 $("#photoFile").onchange=e=>{
- let f=e.target.files[0];if(!f)return;selectedFile=f;let url=URL.createObjectURL(f),img=new Image();
- img.onload=()=>{sourceImage=img;canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);URL.revokeObjectURL(url)};
- img.src=url
-};
-$("#enhance").onclick=()=>{
- if(!sourceImage)return alert("Pilih foto dulu.");
- ctx.drawImage(sourceImage,0,0);let d=ctx.getImageData(0,0,canvas.width,canvas.height),a=Number($("#strength").value)/100;
- for(let i=0;i<d.data.length;i+=4)for(let c=0;c<3;c++)d.data[i+c]=Math.max(0,Math.min(255,(d.data[i+c]-128)*(1+a)+128));
- ctx.putImageData(d,0,0)
+ const f=e.target.files[0];if(!f)return;selectedFile=f;
+ const url=URL.createObjectURL(f),img=new Image();
+ img.onload=()=>{
+  sourceImage=img;
+  try{autoEnhance(img);$("#photoStatus").textContent="Selesai! Foto sudah dijernihkan otomatis."}
+  catch(err){ctx.clearRect(0,0,canvas.width,canvas.height);canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);$("#photoStatus").textContent="Foto ditampilkan tanpa efek otomatis karena memori perangkat terbatas."}
+  URL.revokeObjectURL(url);
+ };
+ img.onerror=()=>{URL.revokeObjectURL(url);alert("Foto tidak dapat dibuka. Coba pilih foto lain.")};
+ img.src=url;
 };
 $("#savePhoto").onclick=()=>{
  if(!canvas.width)return alert("Pilih foto dulu.");
