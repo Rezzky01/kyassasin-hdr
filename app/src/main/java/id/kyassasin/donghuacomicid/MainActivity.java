@@ -62,13 +62,13 @@ public class MainActivity extends Activity {
         " '@media(max-width:767px){.container,.container-fluid{padding-left:12px!important;padding-right:12px!important}.c-tabs-item,.page-listing-item,.manga,.item,.post{border-radius:12px!important}.site-content{padding-top:10px!important}}' +" +
         " 'html,body{overscroll-behavior-y:contain}';" +
         "if(!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
-        "function rebrand(){var sels='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img,.c-header__logo img';" +
+        "function cleanBrand(s){return s.replace(/anichin\\s*care/ig,'KyassasinDev').replace(/anichin/ig,'KyassasinDev');}function rebrand(){var sels='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img,.c-header__logo img';" +
         "document.querySelectorAll(sels).forEach(function(n){n.style.setProperty('display','none','important');});" +
         "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a').forEach(function(a){a.setAttribute('data-ky-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
-        "var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var n;while(n=w.nextNode()){if(/anichin\\s*care/i.test(n.nodeValue)){n.nodeValue=n.nodeValue.replace(/anichin\\s*care/ig,'KyassasinDev');}}" +
-        "document.querySelectorAll('[alt],[title],[aria-label]').forEach(function(e){['alt','title','aria-label'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin\\s*care/i.test(v))e.setAttribute(k,v.replace(/anichin\\s*care/ig,'KyassasinDev'));});});" +
-        "if(document.title&&/anichin\\s*care/i.test(document.title))document.title=document.title.replace(/anichin\\s*care/ig,'KyassasinDev');" +
-        "document.querySelectorAll('input[placeholder],textarea[placeholder],input[value],meta[content]').forEach(function(e){['placeholder','value','content'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin\\s*care/i.test(v))e.setAttribute(k,v.replace(/anichin\\s*care/ig,'KyassasinDev'));});});" +
+        "var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var n;while(n=w.nextNode()){if(/anichin/i.test(n.nodeValue)){n.nodeValue=cleanBrand(n.nodeValue);}}" +
+        "document.querySelectorAll('[alt],[title],[aria-label]').forEach(function(e){['alt','title','aria-label'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin/i.test(v))e.setAttribute(k,cleanBrand(v));});});" +
+        "if(document.title&&/anichin/i.test(document.title))document.title=cleanBrand(document.title);" +
+        "document.querySelectorAll('input[placeholder],textarea[placeholder],input[value],meta[content]').forEach(function(e){['placeholder','value','content'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin/i.test(v))e.setAttribute(k,cleanBrand(v));});});" +
         "}" +
         "rebrand();if(!window.__kyassasinObserver){window.__kyassasinObserver=new MutationObserver(function(){rebrand();});window.__kyassasinObserver.observe(document.documentElement,{childList:true,subtree:true,characterData:true});}" +
         "}catch(e){}})();";
