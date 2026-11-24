@@ -263,6 +263,7 @@ async function processVideo(file){
  videoSourceUrl=URL.createObjectURL(file);
  video.src=videoSourceUrl;video.controls=false;video.playsInline=true;video.volume=0;video.muted=false;video.load();
  await waitForMetadata(video);
+ $("#videoPreview").style.display="block";
  if(!Number.isFinite(video.duration)||video.duration<=0)throw new Error("Durasi video tidak valid");
  const vw=video.videoWidth,vh=video.videoHeight;
  if(!vw||!vh)throw new Error("Resolusi video tidak terbaca");
