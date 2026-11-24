@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
     // Re-skin the source site without changing its episode/video URLs or playback flow.
     private static final String BRAND_SCRIPT =
         "(function(){try{" +
-        "if(!/^(https?:)?\\/\\/(www\\.)?anichin\\.moe/i.test(location.href))return;" +
+        "var onSource=/^(https?:)?\\/\\/(www\\.)?anichin\\.moe/i.test(location.href);" +
         "var cssId='kyassasin-app-skin';" +
         "var css=':root{color-scheme:dark;--ky-bg:#090a10;--ky-panel:#141622;--ky-panel2:#1b1e2c;--ky-text:#f4f3fb;--ky-muted:#9a9db0;--ky-accent:#a78bfa;--ky-line:#292c3c}' +" +
         " 'html,body{background:var(--ky-bg)!important;color:var(--ky-text)!important;font-family:Inter,Roboto,Arial,sans-serif!important}' +" +
@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
         " 'header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after,.c-header__logo a:after{content:attr(data-ky-brand)!important;display:inline-block!important;font:900 21px/1.1 Arial,sans-serif!important;letter-spacing:-.5px!important;color:#c4b5fd!important;padding:8px 4px!important}' +" +
         " '@media(max-width:767px){.container,.container-fluid{padding-left:12px!important;padding-right:12px!important}.c-tabs-item,.page-listing-item,.manga,.item,.post{border-radius:12px!important}.site-content{padding-top:10px!important}}' +" +
         " 'html,body{overscroll-behavior-y:contain}';" +
-        "if(!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
+        "if(onSource&&!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
         "function cleanBrand(s){return s.replace(/anichin\\s*care/ig,'KyassasinDev').replace(/anichin/ig,'KyassasinDev');}function rebrand(){var sels='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img,.c-header__logo img';" +
         "document.querySelectorAll(sels).forEach(function(n){n.style.setProperty('display','none','important');});" +
         "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a').forEach(function(a){a.setAttribute('data-ky-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
