@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
     // App-wide rebrand plus a clean, responsive dark catalog skin on the source domain.
     private static final String BRAND_SCRIPT =
         "(function(){'use strict';try{" +
-        "var host=(location.hostname||'').toLowerCase();var onSource=/(^|\\\\.)anichin\\\\.moe$/.test(host);" +
+        "var host=(location.hostname||'').toLowerCase();var onSource=/(^|\\.)anichin\\.moe$/.test(host);" +
         "var cssId='kyassasin-clean-ui';" +
         "var css=" +
         "' :root{color-scheme:dark;--kbg:#080a12;--kpanel:#111522;--kpanel2:#171d2c;--kline:#252c40;--ktxt:#f4f6ff;--kmuted:#9aa4bb;--kpurple:#9875ff;--kblue:#5e8dff}' +" +
@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
         "'@media(max-width:767px){.container,.container-fluid{padding-left:12px!important;padding-right:12px!important}.site-content{padding-top:10px!important}.listupd{gap:9px!important}.c-tabs-item,.page-listing-item,.manga,.item,.post{border-radius:11px!important}}' +" +
         "'html,body{overscroll-behavior-y:contain}';" +
         "if(onSource&&!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
-        "function clean(s){return s.replace(/anichin\\\\s*care/ig,'KyassasinDev').replace(/anichin/ig,'KyassasinDev');}" +
+        "function clean(s){return s.replace(/anichin\\s*care/ig,'KyassasinDev').replace(/anichin/ig,'KyassasinDev');}" +
         "function rebrand(){if(!document.body)return;" +
         "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var node;while((node=walker.nextNode())){var parent=node.parentElement;if(parent&&/^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA)$/i.test(parent.tagName))continue;if(/anichin/i.test(node.nodeValue))node.nodeValue=clean(node.nodeValue);}" +
         "document.querySelectorAll('[alt],[title],[aria-label],[placeholder]').forEach(function(e){['alt','title','aria-label','placeholder'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin/i.test(v))e.setAttribute(k,clean(v));});});" +
