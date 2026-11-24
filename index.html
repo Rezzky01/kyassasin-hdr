@@ -29,9 +29,9 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
-  <div class="card"><h2>Penjernih foto otomatis</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto, KYASSASIN HDR akan otomatis memperjelas pencahayaan, kontras, dan warna. Tidak perlu mengatur apa pun.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto">Simpan foto jernih</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
+  <div class="card"><h2>Auto HDR Ultra Jernih</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto. Peningkatan kejernihan, pencahayaan, detail, dan warna berjalan otomatis.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto" disabled>Simpan foto jernih</button><button id="shareBtn" disabled>Bagikan ke Status WhatsApp</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
   <div class="card"><h2>Pratinjau video</h2><input type="file" id="videoFile" accept="video/*"><video id="videoPreview" class="preview" controls></video><p class="muted">Versi ini hanya pratinjau video; ekspor video HDR belum tersedia.</p></div>
-  <div class="card"><h2>Bagikan file</h2><button id="shareBtn" class="secondary">Bagikan file terpilih</button></div>
+  
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna yang sudah login. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
  <section id="page-vip" class="page hidden"><div class="card"><h2>Keanggotaan VIP</h2><p id="vipState">Memuat status VIP...</p><p class="muted">Mau VIP? Hubungi admin 6285352860012</p></div></section>
@@ -138,49 +138,69 @@ async function loadUsers(){
 async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),patch);loadUsers()}catch(e){say("#adminMsg","Aksi gagal: "+friendlyError(e))}}
 
 $("#theme").onchange=()=>document.documentElement.dataset.theme=$("#theme").value;
-let canvas=$("#canvas"),ctx=canvas.getContext("2d");
+let canvas=$("#canvas"),ctx=canvas.getContext("2d"),enhancedFile=null;
 function autoEnhance(img){
- const scale=Math.min(1,2560/Math.max(img.naturalWidth,img.naturalHeight));
+ const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
  canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
  canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
- ctx.filter="contrast(1.10) saturate(1.08)";
+ ctx.filter="brightness(1.07) contrast(1.22) saturate(1.16)";
  ctx.drawImage(img,0,0,canvas.width,canvas.height);
  ctx.filter="none";
- const frame=ctx.getImageData(0,0,canvas.width,canvas.height),px=frame.data;
- const hist=new Uint32Array(256);let count=0;
- for(let i=0;i<px.length;i+=4){
-  const y=Math.round(.2126*px[i]+.7152*px[i+1]+.0722*px[i+2]);
-  hist[y]++;count++;
- }
- const cut=Math.floor(count*.012),top=Math.floor(count*.988);
- let sum=0,lo=0,hi=255;
- for(let n=0;n<256;n++){sum+=hist[n];if(sum>=cut){lo=n;break}}
- sum=0;for(let n=0;n<256;n++){sum+=hist[n];if(sum>=top){hi=n;break}}
- if(hi-lo<40){lo=Math.max(0,lo-8);hi=Math.min(255,hi+8)}
- const range=Math.max(1,hi-lo);
- for(let i=0;i<px.length;i+=4){
-  const y=.2126*px[i]+.7152*px[i+1]+.0722*px[i+2];
-  const target=24+((y-lo)/range)*207;
-  const gain=Math.max(.72,Math.min(1.35,target/Math.max(1,y)));
-  for(let c=0;c<3;c++)px[i+c]=Math.max(0,Math.min(255,Math.round(px[i+c]*gain)));
+ const frame=ctx.getImageData(0,0,canvas.width,canvas.height),src=frame.data;
+ const copy=new Uint8ClampedArray(src),w=canvas.width,h=canvas.height;
+ // Penajaman detail ringan dengan kernel 3x3, tetap menjaga warna.
+ for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+  const i=(y*w+x)*4;
+  for(let c=0;c<3;c++){
+   const v=copy[i+c]*5-copy[i-4+c]-copy[i+4+c]-copy[i-w*4+c]-copy[i+w*4+c];
+   src[i+c]=Math.max(0,Math.min(255,v));
+  }
  }
  ctx.putImageData(frame,0,0);
 }
+function canvasFile(){
+ return new Promise(resolve=>canvas.toBlob(blob=>{
+  if(!blob)return resolve(null);
+  resolve(new File([blob],"KYASSASIN-HDR-jernih.jpg",{type:"image/jpeg",lastModified:Date.now()}));
+ },"image/jpeg",.96));
+}
 $("#photoFile").onchange=e=>{
- const f=e.target.files[0];if(!f)return;selectedFile=f;
+ const f=e.target.files[0];if(!f)return;
+ selectedFile=f;enhancedFile=null;$("#savePhoto").disabled=true;$("#shareBtn").disabled=true;
+ $("#photoStatus").textContent="Sedang menjernihkan foto otomatis...";
  const url=URL.createObjectURL(f),img=new Image();
- img.onload=()=>{
+ img.onload=async()=>{
   sourceImage=img;
-  try{autoEnhance(img);$("#photoStatus").textContent="Selesai! Foto sudah dijernihkan otomatis."}
-  catch(err){ctx.clearRect(0,0,canvas.width,canvas.height);canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);$("#photoStatus").textContent="Foto ditampilkan tanpa efek otomatis karena memori perangkat terbatas."}
+  try{
+   autoEnhance(img);
+   enhancedFile=await canvasFile();
+   if(!enhancedFile)throw new Error("Gagal menyiapkan foto");
+   selectedFile=enhancedFile;
+   $("#photoStatus").textContent="Selesai! Foto sudah ditingkatkan otomatis. Tekan Bagikan ke Status WhatsApp untuk melanjutkan.";
+   $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
+  }catch(err){
+   $("#photoStatus").textContent="Foto gagal diproses. Coba foto dengan ukuran lebih kecil.";
+  }
   URL.revokeObjectURL(url);
  };
- img.onerror=()=>{URL.revokeObjectURL(url);alert("Foto tidak dapat dibuka. Coba pilih foto lain.")};
+ img.onerror=()=>{URL.revokeObjectURL(url);$("#photoStatus").textContent="Foto tidak dapat dibuka. Coba pilih foto lain."};
  img.src=url;
 };
 $("#savePhoto").onclick=()=>{
- if(!canvas.width)return alert("Pilih foto dulu.");
- canvas.toBlob(b=>{if(!b)return alert("Gagal membuat gambar.");let a=document.createElement("a"),u=URL.createObjectURL(b);a.href=u;a.download="kyassasin-hdr.jpg";a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)},"image/jpeg",.95)
+ if(!enhancedFile)return;
+ const url=URL.createObjectURL(enhancedFile),a=document.createElement("a");
+ a.href=url;a.download="KYASSASIN-HDR-jernih.jpg";a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+};
+$("#shareBtn").onclick=async()=>{
+ if(!enhancedFile)return;
+ try{
+  if(navigator.canShare?.({files:[enhancedFile]})){
+   await navigator.share({files:[enhancedFile],title:"KYASSASIN HDR - Foto Jernih"});
+  }else{
+   alert("Perangkat tidak mendukung berbagi foto langsung. Tekan Simpan foto jernih, lalu pilih foto dari Galeri untuk Status WhatsApp.");
+  }
+ }catch(err){if(err.name!=="AbortError")alert("Gagal membuka menu berbagi. Simpan foto lalu bagikan dari Galeri.")}
 };
 $("#videoFile").onchange=e=>{let f=e.target.files[0];if(f){selectedFile=f;$("#videoPreview").src=URL.createObjectURL(f)}};
 $("#shareBtn").onclick=async()=>{
