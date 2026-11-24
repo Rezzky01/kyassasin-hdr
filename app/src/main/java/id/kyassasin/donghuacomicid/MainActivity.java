@@ -28,29 +28,54 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String HOME = "https://anichin.moe/";
     private static final int FILE_CHOOSER = 71;
-    private static final int BG = Color.rgb(10, 10, 16);
+    private static final int BG = Color.rgb(9, 10, 16);
     private WebView webView;
     private ProgressBar progress;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
     private ValueCallback<Uri[]> fileCallback;
 
+    // Re-skin the source site without changing its episode/video URLs or playback flow.
     private static final String BRAND_SCRIPT =
         "(function(){try{" +
         "if(!/^(https?:)?\\/\\/(www\\.)?anichin\\.moe/i.test(location.href))return;" +
-        "var id='kyassasin-brand-style';" +
-        "if(!document.getElementById(id)){" +
-        "var css='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img{display:none!important}header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a{font-size:0!important;text-decoration:none!important}header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after{content:attr(data-brand)!important;display:inline-block!important;font:800 22px/1.2 Arial,sans-serif!important;letter-spacing:.4px!important;color:#a78bfa!important;padding:8px 4px!important}html,body{overscroll-behavior-y:contain}video,iframe{max-width:100%}';" +
-        "var st=document.createElement('style');st.id=id;st.textContent=css;(document.head||document.documentElement).appendChild(st);" +
+        "var cssId='kyassasin-app-skin';" +
+        "var css=':root{color-scheme:dark;--ky-bg:#090a10;--ky-panel:#141622;--ky-panel2:#1b1e2c;--ky-text:#f4f3fb;--ky-muted:#9a9db0;--ky-accent:#a78bfa;--ky-line:#292c3c}' +" +
+        " 'html,body{background:var(--ky-bg)!important;color:var(--ky-text)!important;font-family:Inter,Roboto,Arial,sans-serif!important}' +" +
+        " 'body{padding-bottom:18px!important}a{color:#c4b5fd!important}h1,h2,h3,h4,.entry-title,.post-title{color:#f7f5ff!important;font-weight:800!important;letter-spacing:-.25px}' +" +
+        " 'header,.site-header,.c-header,.c-header__top,.c-header__main,.c-header__nav,.main-navigation,.site-navigation{background:#0e1019!important;border-color:var(--ky-line)!important;box-shadow:0 5px 24px #0005!important}' +" +
+        " '.container,.container-fluid,.site-content,.site-content .row,.c-page,.main-col,.main-content{max-width:1240px!important}' +" +
+        " '.c-page,.site-content,.content-area,.main-col,.main-content,.widget-area,.sidebar{color:var(--ky-text)!important}' +" +
+        " '.c-tabs-item,.page-listing-item,.manga,.item,.post,.c-blog__item,.wp-manga,.listing .row>div,.popular-item-wrap,.widget{background:var(--ky-panel)!important;border:1px solid var(--ky-line)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 6px 22px #0003!important}' +" +
+        " '.c-tabs-item,.page-listing-item,.manga,.item,.post{margin-bottom:14px!important}' +" +
+        " '.c-tabs-item__content,.item-summary,.post-content,.entry-content,.widget-content,.tab-content{color:#d8d7e5!important}' +" +
+        " 'img{border-radius:9px} .img-responsive,.item-thumb img,.c-image-hover img{object-fit:cover!important}' +" +
+        " 'input,select,textarea,.form-control,.search-field{background:#171a27!important;color:#fff!important;border:1px solid #34384b!important;border-radius:12px!important;min-height:42px}' +" +
+        " 'button,.btn,.btn-primary,input[type=submit]{background:linear-gradient(135deg,#8b5cf6,#6d4bd1)!important;color:#fff!important;border:0!important;border-radius:11px!important;font-weight:700!important}' +" +
+        " '.pagination a,.page-numbers{background:#171a27!important;border:1px solid var(--ky-line)!important;border-radius:9px!important;padding:8px 12px!important}' +" +
+        " '.breadcrumb,.c-breadcrumb,.nav-links,.chapter-list,.listing-chapters_wrap,.wp-manga-chapter{background:#121520!important;color:var(--ky-muted)!important;border-color:var(--ky-line)!important}' +" +
+        " '.ads,.advertisement,[class*=advertisement],[id*=advertisement]{max-width:100%;overflow:hidden}' +" +
+        " 'video,iframe{max-width:100%;border-radius:12px} .reading-content img{border-radius:0!important}' +" +
+        " 'header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img,.c-header__logo img{display:none!important}' +" +
+        " 'header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a{font-size:0!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important;min-height:44px}' +" +
+        " 'header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after,.c-header__logo a:after{content:attr(data-ky-brand)!important;display:inline-block!important;font:900 21px/1.1 Arial,sans-serif!important;letter-spacing:-.5px!important;color:#c4b5fd!important;padding:8px 4px!important}' +" +
+        " '@media(max-width:767px){.container,.container-fluid{padding-left:12px!important;padding-right:12px!important}.c-tabs-item,.page-listing-item,.manga,.item,.post{border-radius:12px!important}.site-content{padding-top:10px!important}}' +" +
+        " 'html,body{overscroll-behavior-y:contain}';" +
+        "if(!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
+        "function rebrand(){var sels='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img,.c-header__logo img';" +
+        "document.querySelectorAll(sels).forEach(function(n){n.style.setProperty('display','none','important');});" +
+        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a').forEach(function(a){a.setAttribute('data-ky-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
+        "var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var n;while(n=w.nextNode()){if(/anichin\\s*care/i.test(n.nodeValue)){n.nodeValue=n.nodeValue.replace(/anichin\\s*care/ig,'KyassasinDev');}}" +
+        "document.querySelectorAll('[alt],[title],[aria-label]').forEach(function(e){['alt','title','aria-label'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin\\s*care/i.test(v))e.setAttribute(k,v.replace(/anichin\\s*care/ig,'KyassasinDev'));});});" +
         "}" +
-        "document.querySelectorAll('header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img').forEach(function(img){img.style.display='none';});" +
-        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a').forEach(function(a){a.setAttribute('data-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
+        "rebrand();if(!window.__kyassasinObserver){window.__kyassasinObserver=new MutationObserver(function(){rebrand();});window.__kyassasinObserver.observe(document.documentElement,{childList:true,subtree:true,characterData:true});}" +
         "}catch(e){}})();";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR & 0);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
         FrameLayout root = new FrameLayout(this);
@@ -76,6 +101,8 @@ public class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
