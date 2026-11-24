@@ -1,228 +1,230 @@
 package id.kyassasin.donghuacomicid;
 
 import android.app.Activity;
-import android.app.DownloadManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.webkit.CookieManager;
-import android.webkit.URLUtil;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
-import android.widget.ProgressBar;
-import android.widget.Toast;
+import android.widget.*;
+import android.text.TextUtils;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
-    private static final String HOME = "https://anichin.moe/";
-    private static final int FILE_CHOOSER = 71;
-    private static final int BG = Color.rgb(9, 10, 16);
-    private WebView webView;
-    private ProgressBar progress;
-    private View fullscreenView;
-    private WebChromeClient.CustomViewCallback fullscreenCallback;
-    private ValueCallback<Uri[]> fileCallback;
+    private static final String BASE = "https://anichin.moe";
+    private static final int BG = Color.rgb(8,10,17), PANEL = Color.rgb(19,23,35);
+    private static final int TEXT = Color.rgb(244,246,255), MUTED = Color.rgb(153,163,184);
+    private final OkHttpClient http = new OkHttpClient.Builder().followRedirects(true).build();
+    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private LinearLayout root, body, topBar;
+    private EditText searchBox;
+    private ExoPlayer player;
+    private PlayerView playerView;
+    private String currentTitle = "KyassasinDev";
+    private final ArrayList<Show> cached = new ArrayList<>();
 
-    // App-wide rebrand plus a clean, responsive dark catalog skin on the source domain.
-    private static final String BRAND_SCRIPT =
-        "(function(){'use strict';try{" +
-        "var host=(location.hostname||'').toLowerCase();var onSource=/(^|\\.)anichin\\.moe$/.test(host);" +
-        "var cssId='kyassasin-clean-ui';" +
-        "var css=" +
-        "' :root{color-scheme:dark;--kbg:#080a12;--kpanel:#111522;--kpanel2:#171d2c;--kline:#252c40;--ktxt:#f4f6ff;--kmuted:#9aa4bb;--kpurple:#9875ff;--kblue:#5e8dff}' +" +
-        "'html,body{background:var(--kbg)!important;color:var(--ktxt)!important;font-family:Inter,Roboto,\"Segoe UI\",Arial,sans-serif!important;font-size:14px!important;line-height:1.55!important}' +" +
-        "'body{margin:0!important;overflow-x:hidden!important}a{color:#c6b7ff!important;text-decoration:none!important}a:hover{color:#fff!important}h1,h2,h3,h4,h5,.entry-title,.post-title{color:#f7f7ff!important;font-weight:800!important;letter-spacing:-.35px!important;line-height:1.25!important}' +" +
-        "'header,.site-header,.c-header,.header,.top-header,.main-header,.c-header__top,.c-header__main,.c-header__nav,.main-navigation,.site-navigation{background:#0d111d!important;border:0!important;border-bottom:1px solid var(--kline)!important;box-shadow:0 8px 28px #0006!important}' +" +
-        "'.container,.container-fluid,.site-content,.c-page,.main-col,.main-content{max-width:1240px!important}' +" +
-        "'.site-content,.content-area,.main-col,.main-content,.widget-area,.sidebar,.c-page{color:var(--ktxt)!important}' +" +
-        "'.c-tabs-item,.page-listing-item,.manga,.item,.post,.c-blog__item,.wp-manga,.popular-item-wrap,.widget,.anime-item,.bs,.listupd .bs,.listupd .utao,.listupd .bsx{background:var(--kpanel)!important;border:1px solid var(--kline)!important;border-radius:13px!important;overflow:hidden!important;box-shadow:0 7px 22px #0003!important}' +" +
-        "'.c-tabs-item,.page-listing-item,.manga,.item,.post,.listupd .bs{margin:0 0 14px!important}' +" +
-        "'.c-tabs-item__content,.item-summary,.post-content,.entry-content,.widget-content,.tab-content,.tt{color:#d6dbea!important}' +" +
-        "'.listupd,.listupd .list-update,.listupd .listupd{gap:13px!important}' +" +
-        "'.listupd .bs .bsx,.listupd .bs .bsx .limit,.listupd .bs .bsx .limit img{border-radius:10px!important}' +" +
-        "'.listupd .bs .bsx .tt,.listupd .bs .bsx .limit .typez{color:#f3f4ff!important;font-weight:750!important}' +" +
-        "'.listupd .bs .bsx .epx,.listupd .bs .bsx .sb,.listupd .bs .bsx .year{color:var(--kmuted)!important}' +" +
-        "'img{max-width:100%;height:auto} .img-responsive,.item-thumb img,.c-image-hover img{object-fit:cover!important}' +" +
-        "'input,select,textarea,.form-control,.search-field{background:#151b2a!important;color:#fff!important;border:1px solid #303951!important;border-radius:11px!important;min-height:43px!important;padding:9px 12px!important}' +" +
-        "'button,.btn,.btn-primary,input[type=submit]{background:linear-gradient(135deg,#9673ff,#6259d9)!important;color:#fff!important;border:0!important;border-radius:10px!important;font-weight:750!important;box-shadow:0 5px 16px #7658ed33!important}' +" +
-        "'.pagination a,.pagination span,.page-numbers{background:#151b2a!important;border:1px solid var(--kline)!important;border-radius:9px!important;padding:8px 12px!important;color:#eee!important}' +" +
-        "'.breadcrumb,.c-breadcrumb,.nav-links,.chapter-list,.listing-chapters_wrap,.wp-manga-chapter{background:#111725!important;color:var(--kmuted)!important;border-color:var(--kline)!important;border-radius:10px!important}' +" +
-        "'.entry-content,.content-area,.postbody,.post-content,.c-blog__content{color:#d9deec!important}' +" +
-        "'video,iframe{max-width:100%;border:0!important;border-radius:12px!important;background:#000!important} .reading-content img{border-radius:0!important}' +" +
-        "'#header,.header,.site-header{position:relative!important;z-index:20!important}' +" +
-        "'@media(max-width:767px){.container,.container-fluid{padding-left:12px!important;padding-right:12px!important}.site-content{padding-top:10px!important}.listupd{gap:9px!important}.c-tabs-item,.page-listing-item,.manga,.item,.post{border-radius:11px!important}}' +" +
-        "'html,body{overscroll-behavior-y:contain}';" +
-        "if(onSource&&!document.getElementById(cssId)){var st=document.createElement('style');st.id=cssId;st.textContent=css;(document.head||document.documentElement).appendChild(st);}" +
-        "function clean(s){return s.replace(/anichin\\s*care/ig,'KyassasinDev').replace(/anichin/ig,'KyassasinDev');}" +
-        "function rebrand(){if(!document.body)return;" +
-        "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var node;while((node=walker.nextNode())){var parent=node.parentElement;if(parent&&/^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA)$/i.test(parent.tagName))continue;if(/anichin/i.test(node.nodeValue))node.nodeValue=clean(node.nodeValue);}" +
-        "document.querySelectorAll('[alt],[title],[aria-label],[placeholder]').forEach(function(e){['alt','title','aria-label','placeholder'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin/i.test(v))e.setAttribute(k,clean(v));});});" +
-        "document.querySelectorAll('input[value],meta[content]').forEach(function(e){['value','content'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin/i.test(v))e.setAttribute(k,clean(v));});});" +
-        "if(document.title&&/anichin/i.test(document.title))document.title=clean(document.title);" +
-        "document.querySelectorAll('img,svg').forEach(function(e){var s=((e.getAttribute('alt')||'')+' '+(e.getAttribute('src')||'')+' '+(e.getAttribute('href')||''));if(/anichin/i.test(s)&&e.closest('header,.site-header,.logo,.site-logo,#logo,.c-header__logo'))e.style.setProperty('display','none','important');});" +
-        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a').forEach(function(a){a.textContent='KyassasinDev';a.setAttribute('aria-label','KyassasinDev');a.style.setProperty('font-size','20px','important');a.style.setProperty('font-weight','900','important');a.style.setProperty('color','#c6b7ff','important');});" +
-        "}" +
-        "var queued=false;function schedule(){if(queued)return;queued=true;setTimeout(function(){queued=false;rebrand();},80);}rebrand();" +
-        "if(!window.__kyassasinObserver){window.__kyassasinObserver=new MutationObserver(schedule);window.__kyassasinObserver.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','alt','aria-label','placeholder','value']});}" +
-        "window.addEventListener('DOMContentLoaded',rebrand);window.addEventListener('load',rebrand);" +
-        "}catch(e){}})();";
+    static class Show {
+        String title, url, image, meta;
+        Show(String t,String u,String i,String m){title=t;url=u;image=i;meta=m;}
+    }
+    static class Episode {
+        String title,url;
+        Episode(String t,String u){title=t;url=u;}
+    }
 
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
+    @Override public void onCreate(Bundle b) {
+        super.onCreate(b);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR & 0);
+        getWindow().getDecorView().setSystemUiVisibility(0);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        showHome();
+    }
 
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(BG);
-        webView = new WebView(this);
-        webView.setBackgroundColor(BG);
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setMax(100);
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(167, 139, 250)));
-        progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 32, 48)));
-        root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
-        root.addView(progress, new FrameLayout.LayoutParams(-1, dp(2)));
+    private int dp(float n){return (int)(n*getResources().getDisplayMetrics().density+.5f);}
+    private GradientDrawable shape(int color,int radius){
+        GradientDrawable d=new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(radius)); return d;
+    }
+    private TextView label(String s,int size,int color,boolean bold){
+        TextView t=new TextView(this); t.setText(s); t.setTextSize(size); t.setTextColor(color);
+        if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        return t;
+    }
+    private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
+    private LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
+    private void shell(String title, boolean back){
+        root=column();root.setBackgroundColor(BG);
+        topBar=row();topBar.setPadding(dp(16),dp(14),dp(16),dp(12));
+        TextView brand=label(back?"‹  "+title:"KYASSASINDEV",20,TEXT,true);
+        topBar.addView(brand,new LinearLayout.LayoutParams(0,dp(42),1));
+        if(!back){
+            TextView search=label("⌕",27,TEXT,true);search.setGravity(Gravity.CENTER);
+            search.setBackground(shape(PANEL,14));topBar.addView(search,new LinearLayout.LayoutParams(dp(44),dp(42)));
+            search.setOnClickListener(v->showSearch());
+        } else brand.setOnClickListener(v->showHome());
+        root.addView(topBar);
+        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);
+        body=column();body.setPadding(dp(16),dp(8),dp(16),dp(28));scroll.addView(body);
+        root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
-
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setLoadsImagesAutomatically(true);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
-        settings.setSupportMultipleWindows(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setBuiltInZoomControls(false);
-        settings.setDisplayZoomControls(false);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-
-        CookieManager cookies = CookieManager.getInstance();
-        cookies.setAcceptCookie(true);
-        cookies.setAcceptThirdPartyCookies(webView, true);
-
-        webView.setWebViewClient(new WebViewClient() {
-            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
-                if ("http".equals(scheme) || "https".equals(scheme)) return false;
-                try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
-                catch (Exception e) { Toast.makeText(MainActivity.this, "Tidak ada aplikasi untuk membuka tautan ini.", Toast.LENGTH_SHORT).show(); }
-                return true;
-            }
-            @Override public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                view.evaluateJavascript(BRAND_SCRIPT, null);
-            }
-            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) Toast.makeText(MainActivity.this,
-                    "Koneksi bermasalah. Periksa internet lalu muat ulang.", Toast.LENGTH_LONG).show();
-            }
-        });
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override public void onProgressChanged(WebView view, int value) {
-                progress.setProgress(value);
-                progress.setVisibility(value >= 100 ? View.GONE : View.VISIBLE);
-            }
-            @Override public void onShowCustomView(View view, CustomViewCallback callback) {
-                if (fullscreenView != null) { callback.onCustomViewHidden(); return; }
-                fullscreenView = view;
-                fullscreenCallback = callback;
-                ((ViewGroup) webView.getParent()).addView(view, new FrameLayout.LayoutParams(-1, -1));
-                webView.setVisibility(View.GONE);
-                progress.setVisibility(View.GONE);
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-            }
-            @Override public void onHideCustomView() { hideFullscreen(); }
-            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
-                if (fileCallback != null) fileCallback.onReceiveValue(null);
-                fileCallback = callback;
-                try { startActivityForResult(params.createIntent(), FILE_CHOOSER); }
-                catch (Exception e) { fileCallback = null; return false; }
-                return true;
-            }
-        });
-
-        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
-            try {
-                String filename = URLUtil.guessFileName(url, contentDisposition, mimeType);
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                request.setTitle(filename);
-                request.setDescription("Unduhan KyassasinDev");
-                request.setMimeType(mimeType);
-                request.addRequestHeader("User-Agent", userAgent);
-                String cookie = CookieManager.getInstance().getCookie(url);
-                if (cookie != null) request.addRequestHeader("Cookie", cookie);
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
-                ((DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(request);
-                Toast.makeText(this, "Unduhan dimulai.", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Toast.makeText(this, "Unduhan tidak dapat dimulai.", Toast.LENGTH_LONG).show();
-            }
-        });
-
-        if (state != null) {
-            if (webView.restoreState(state) == null) webView.loadUrl(HOME);
-        } else webView.loadUrl(HOME);
     }
-
-    private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
-
-    private void hideFullscreen() {
-        if (fullscreenView == null) return;
-        if (fullscreenView.getParent() instanceof ViewGroup)
-            ((ViewGroup) fullscreenView.getParent()).removeView(fullscreenView);
-        fullscreenView = null;
-        webView.setVisibility(View.VISIBLE);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-        if (fullscreenCallback != null) fullscreenCallback.onCustomViewHidden();
-        fullscreenCallback = null;
+    private void heading(String s){
+        TextView t=label(s,19,TEXT,true);t.setPadding(0,dp(18),0,dp(12));body.addView(t);
     }
-
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == FILE_CHOOSER && fileCallback != null) {
-            Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-            fileCallback.onReceiveValue(result);
-            fileCallback = null;
+    private void message(String s){
+        TextView t=label(s,14,MUTED,false);t.setPadding(dp(14),dp(16),dp(14),dp(16));
+        t.setBackground(shape(PANEL,14));body.addView(t,new LinearLayout.LayoutParams(-1,-2));
+    }
+    private void showHome(){
+        shell("Beranda",false);
+        TextView hero=label("Jelajahi dunia donghua.",24,TEXT,true);
+        hero.setPadding(dp(2),dp(10),dp(2),dp(5));body.addView(hero);
+        TextView sub=label("Katalog, episode, dan pemutar dalam satu aplikasi.",13,MUTED,false);
+        body.addView(sub);
+        heading("Donghua terbaru");
+        message("Menghubungkan ke katalog…");
+        loadCatalog(BASE+"/",false);
+    }
+    private void showSearch(){
+        shell("Pencarian",true);
+        searchBox=new EditText(this);searchBox.setSingleLine(true);searchBox.setTextColor(TEXT);
+        searchBox.setHintTextColor(MUTED);searchBox.setHint("Cari judul donghua…");
+        searchBox.setPadding(dp(14),0,dp(14),0);searchBox.setBackground(shape(PANEL,13));
+        body.addView(searchBox,new LinearLayout.LayoutParams(-1,dp(50)));
+        Button go=button("Cari");body.addView(go,new LinearLayout.LayoutParams(-1,dp(48)));
+        go.setOnClickListener(v->{String q=searchBox.getText().toString().trim();if(!q.isEmpty())loadCatalog(BASE+"/?s="+android.net.Uri.encode(q),true);});
+        searchBox.setOnEditorActionListener((v,a,e)->{go.performClick();return true;});
+    }
+    private Button button(String text){
+        Button b=new Button(this);b.setText(text);b.setTextColor(Color.WHITE);b.setAllCaps(false);
+        b.setTextSize(14);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        b.setBackground(shape(Color.rgb(116,86,226),12));return b;
+    }
+    private void loadCatalog(String url,boolean clear){
+        io.execute(()->{
+            try{
+                Document doc=get(url);ArrayList<Show> items=parseShows(doc);
+                runOnUiThread(()->{
+                    if(isFinishing())return;
+                    if(clear)body.removeAllViews();
+                    if(items.isEmpty()){message("Katalog belum dapat dimuat. Server sumber mungkin membatasi koneksi aplikasi. Coba lagi nanti.");return;}
+                    cached.clear();cached.addAll(items);
+                    if(!clear)body.removeViewAt(body.getChildCount()-1);
+                    for(Show s:items)addShow(s);
+                });
+            }catch(Exception e){runOnUiThread(()->message("Gagal memuat katalog. Periksa koneksi internet lalu coba lagi."));}
+        });
+    }
+    private Document get(String url)throws IOException{
+        Request req=new Request.Builder().url(url).header("User-Agent","Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/124 Mobile Safari/537.36")
+            .header("Accept-Language","id-ID,id;q=0.9,en;q=0.7").build();
+        try(Response r=http.newCall(req).execute()){
+            if(!r.isSuccessful()||r.body()==null)throw new IOException("HTTP "+r.code());
+            return Jsoup.parse(r.body().string(),url);
         }
     }
-
-    @Override protected void onSaveInstanceState(Bundle out) {
-        super.onSaveInstanceState(out);
-        if (webView != null) webView.saveState(out);
+    private ArrayList<Show> parseShows(Document doc){
+        LinkedHashMap<String,Show> map=new LinkedHashMap<>();
+        Elements cards=doc.select(".bsx, .listupd .bs, .page-item-detail, article");
+        for(Element card:cards){
+            Element a=card.selectFirst("a[href]");if(a==null)continue;
+            String href=a.absUrl("href");if(!href.startsWith("http"))continue;
+            Element titleEl=card.selectFirst(".tt, .entry-title, h2, h3, [title]");
+            String title=titleEl!=null?titleEl.text():a.attr("title");
+            if(title.isEmpty())title=a.text();if(title.isEmpty())continue;
+            Element img=card.selectFirst("img");
+            String image=img==null?"":firstNonEmpty(img.attr("data-src"),img.attr("data-lazy-src"),img.absUrl("src"));
+            Element meta=card.selectFirst(".epx,.status,.typez,.year");
+            map.put(href,new Show(title,href,image,meta==null?"Donghua":meta.text()));
+        }
+        return new ArrayList<>(map.values());
     }
-
-    @Override public void onBackPressed() {
-        if (fullscreenView != null) { hideFullscreen(); return; }
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+    private String firstNonEmpty(String...v){for(String s:v)if(s!=null&&!s.trim().isEmpty())return s;return "";}
+    private void addShow(Show s){
+        LinearLayout card=row();card.setPadding(dp(10),dp(10),dp(10),dp(10));card.setBackground(shape(PANEL,15));
+        LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(124));cp.bottomMargin=dp(10);body.addView(card,cp);
+        ImageView poster=new ImageView(this);poster.setScaleType(ImageView.ScaleType.CENTER_CROP);poster.setBackground(shape(Color.rgb(35,39,55),10));
+        card.addView(poster,new LinearLayout.LayoutParams(dp(78),dp(104)));
+        if(!s.image.isEmpty())loadImage(s.image,poster);
+        LinearLayout info=column();info.setPadding(dp(12),0,0,0);card.addView(info,new LinearLayout.LayoutParams(0,-2,1));
+        TextView title=label(s.title,15,TEXT,true);title.setMaxLines(2);title.setEllipsize(TextUtils.TruncateAt.END);info.addView(title);
+        TextView meta=label(s.meta,12,MUTED,false);meta.setPadding(0,dp(6),0,dp(8));info.addView(meta);
+        TextView open=label("Lihat detail  ›",12,Color.rgb(184,163,255),true);info.addView(open);
+        card.setOnClickListener(v->showDetail(s));
     }
-
-    @Override protected void onDestroy() {
-        if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
-        if (webView != null) { webView.stopLoading(); webView.destroy(); webView = null; }
-        super.onDestroy();
+    private void loadImage(String url,ImageView target){
+        io.execute(()->{try{Request q=new Request.Builder().url(url).build();try(Response r=http.newCall(q).execute()){
+            if(r.body()==null)return;byte[] data=r.body().bytes();android.graphics.Bitmap bmp=android.graphics.BitmapFactory.decodeByteArray(data,0,data.length);
+            if(bmp!=null)runOnUiThread(()->target.setImageBitmap(bmp));
+        }}catch(Exception ignored){}});
     }
+    private void showDetail(Show show){
+        shell(show.title,true);
+        heading(show.title);message("Memuat sinopsis dan daftar episode…");
+        io.execute(()->{try{
+            Document doc=get(show.url);Element desc=doc.selectFirst(".entry-content, .description, .desc, .entry-content-single");
+            String synopsis=desc==null?"Sinopsis belum tersedia.":desc.text();
+            Elements links=doc.select(".eplister a[href], .episodelist a[href], .episode-list a[href], a[href*=/episode/]");
+            LinkedHashMap<String,Episode> eps=new LinkedHashMap<>();
+            for(Element a:links){String u=a.absUrl("href"),t=a.text();if(u.startsWith("http")&&!t.isEmpty())eps.put(u,new Episode(t,u));}
+            ArrayList<Episode> list=new ArrayList<>(eps.values());
+            runOnUiThread(()->{
+                body.removeAllViews();heading(show.title);message(synopsis);
+                heading("Daftar episode");
+                if(list.isEmpty()){message("Daftar episode tidak terbaca dari halaman sumber.");return;}
+                for(Episode ep:list){TextView item=label("▶   "+ep.title,14,TEXT,true);item.setPadding(dp(14),dp(15),dp(14),dp(15));
+                    item.setBackground(shape(PANEL,12));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=dp(8);body.addView(item,p);
+                    item.setOnClickListener(v->resolveEpisode(ep));}
+            });
+        }catch(Exception e){runOnUiThread(()->{body.removeAllViews();message("Detail donghua gagal dimuat dari sumber.");});}});
+    }
+    private void resolveEpisode(Episode ep){
+        shell(ep.title,true);heading(ep.title);message("Menyiapkan pemutar…");
+        io.execute(()->{try{
+            Document doc=get(ep.url);String media=findMedia(doc,ep.url,0);
+            runOnUiThread(()->{
+                body.removeAllViews();heading(ep.title);
+                if(media==null){message("Sumber ini tidak menyediakan tautan video langsung yang kompatibel. Pemutar tidak akan memuat halaman iklan atau melewati proteksi video.");return;}
+                startPlayer(media);
+            });
+        }catch(Exception e){runOnUiThread(()->{body.removeAllViews();message("Video gagal dimuat. Server mungkin memblokir permintaan aplikasi.");});}});
+    }
+    private String findMedia(Document doc,String base,int depth)throws IOException{
+        Element video=doc.selectFirst("video source[src], video[src], source[src]");
+        if(video!=null){String u=video.hasAttr("src")?video.absUrl("src"):video.parent().absUrl("src");if(isMedia(u))return u;}
+        Elements sources=doc.select("iframe[src]");
+        if(depth>=3)return null;
+        for(Element frame:sources){
+            String u=frame.absUrl("src");if(!u.startsWith("http"))continue;
+            try{Document nested=get(u);String found=findMedia(nested,u,depth+1);if(found!=null)return found;}catch(Exception ignored){}
+        }
+        return null;
+    }
+    private boolean isMedia(String u){String x=u.toLowerCase(Locale.US);return x.contains(".m3u8")||x.contains(".mp4")||x.contains(".mpd");}
+    private void startPlayer(String url){
+        playerView=new PlayerView(this);playerView.setUseController(true);playerView.setBackgroundColor(Color.BLACK);
+        body.addView(playerView,new LinearLayout.LayoutParams(-1,dp(220)));
+        player=new ExoPlayer.Builder(this).build();playerView.setPlayer(player);
+        player.setMediaItem(MediaItem.fromUri(url));player.prepare();player.play();
+        TextView note=label("Pemutar native KyassasinDev • Media3",12,MUTED,false);note.setPadding(0,dp(10),0,0);body.addView(note);
+    }
+    @Override public void onBackPressed(){if(player!=null){player.release();player=null;}showHome();}
+    @Override protected void onDestroy(){if(player!=null){player.release();player=null;}io.shutdownNow();super.onDestroy();}
 }
