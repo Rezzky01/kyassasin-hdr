@@ -28,26 +28,45 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String HOME = "https://anichin.moe/";
     private static final int FILE_CHOOSER = 71;
+    private static final int BG = Color.rgb(10, 10, 16);
     private WebView webView;
     private ProgressBar progress;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
     private ValueCallback<Uri[]> fileCallback;
 
+    private static final String BRAND_SCRIPT =
+        "(function(){try{" +
+        "if(!/^(https?:)?\\/\\/(www\\.)?anichin\\.moe/i.test(location.href))return;" +
+        "var id='kyassasin-brand-style';" +
+        "if(!document.getElementById(id)){" +
+        "var css='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img{opacity:0!important;width:0!important;height:0!important;display:none!important}'+
+        'header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a{font-size:0!important;text-decoration:none!important}'+
+        'header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after{content:"KyassasinDev"!important;display:inline-block!important;font:800 22px/1.2 Arial,sans-serif!important;letter-spacing:.4px!important;color:#a78bfa!important;padding:8px 4px!important}'+
+        'html,body{overscroll-behavior-y:contain}video,iframe{max-width:100%}';" +
+        "var st=document.createElement('style');st.id=id;st.textContent=css;(document.head||document.documentElement).appendChild(st);" +
+        "}" +
+        "document.querySelectorAll('header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img').forEach(function(img){img.style.display='none';});" +
+        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a').forEach(function(a){if(!a.dataset.kyassasinBrand){a.dataset.kyassasinBrand='1';a.setAttribute('aria-label','KyassasinDev');}});" +
+        "}catch(e){}})();";
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(9, 9, 15));
-        getWindow().setNavigationBarColor(Color.rgb(9, 9, 15));
+        getWindow().setStatusBarColor(BG);
+        getWindow().setNavigationBarColor(BG);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.rgb(9, 9, 15));
+        root.setBackgroundColor(BG);
         webView = new WebView(this);
+        webView.setBackgroundColor(BG);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(100);
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(139, 92, 246)));
+        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(167, 139, 250)));
+        progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 32, 48)));
         root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
-        root.addView(progress, new FrameLayout.LayoutParams(-1, dp(3)));
+        FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(-1, dp(2));
+        root.addView(progress, progressParams);
         setContentView(root);
 
         WebSettings settings = webView.getSettings();
@@ -59,6 +78,8 @@ public class MainActivity extends Activity {
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportMultipleWindows(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -72,6 +93,10 @@ public class MainActivity extends Activity {
                 try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
                 catch (Exception e) { Toast.makeText(MainActivity.this, "Tidak ada aplikasi untuk membuka tautan ini.", Toast.LENGTH_SHORT).show(); }
                 return true;
+            }
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                view.evaluateJavascript(BRAND_SCRIPT, null);
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) Toast.makeText(MainActivity.this,
@@ -111,7 +136,7 @@ public class MainActivity extends Activity {
                 String filename = URLUtil.guessFileName(url, contentDisposition, mimeType);
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
                 request.setTitle(filename);
-                request.setDescription("Mengunduh dari Anichin");
+                request.setDescription("Unduhan KyassasinDev");
                 request.setMimeType(mimeType);
                 request.addRequestHeader("User-Agent", userAgent);
                 String cookie = CookieManager.getInstance().getCookie(url);
@@ -127,30 +152,21 @@ public class MainActivity extends Activity {
 
         if (state != null) {
             if (webView.restoreState(state) == null) webView.loadUrl(HOME);
-        } else {
-            webView.loadUrl(HOME);
-        }
+        } else webView.loadUrl(HOME);
     }
 
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
-    }
+    private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + 0.5f); }
 
     private void hideFullscreen() {
         if (fullscreenView == null) return;
-        ViewParentSafe.remove(fullscreenView);
+        if (fullscreenView.getParent() instanceof ViewGroup)
+            ((ViewGroup) fullscreenView.getParent()).removeView(fullscreenView);
         fullscreenView = null;
         webView.setVisibility(View.VISIBLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         if (fullscreenCallback != null) fullscreenCallback.onCustomViewHidden();
         fullscreenCallback = null;
-    }
-
-    private static final class ViewParentSafe {
-        static void remove(View view) {
-            if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
-        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
