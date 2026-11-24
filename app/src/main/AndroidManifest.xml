@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application
         android:theme="@style/AppTheme"
-        android:label="Donghua Comic ID"
+        android:label="KyassasinDev"
         android:usesCleartextTraffic="false"
         android:hardwareAccelerated="true"
         android:allowBackup="false"
