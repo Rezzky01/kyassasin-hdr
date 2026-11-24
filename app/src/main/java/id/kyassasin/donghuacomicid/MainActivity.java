@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
-    private static final String API = "https://anichin-api-nine.vercel.app";
+    private static final String API = "https://api.farellvpn.engineer";
     private static final int BG=0xFF080A12, PANEL=0xFF121725, TEXT=0xFFF5F6FF, MUTED=0xFF9AA4BB, ACCENT=0xFF9875FF;
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private LinearLayout root, content, top;
@@ -95,8 +95,8 @@ public class MainActivity extends Activity {
         button(actions,"Cari Donghua",()->showSearch(),true); button(actions,"Ongoing",()->loadList("/ongoing?page=1","Sedang Tayang"),false);
         section("Episode Terbaru"); note("Memuat katalog...");
         final int marker=content.getChildCount()-1;
-        request("/latest?page=1",j->{content.removeViewAt(marker); renderCards(extractItems(j));},e->{content.removeViewAt(marker);note("Katalog belum tersedia: "+e);});
-        request("/popular",j->{section("Populer");renderCards(extractItems(j));},e->{});
+        request("/api/v1/browse/anichin?feed=home&page=1",j->{content.removeViewAt(marker); renderCards(extractItems(j));},e->{content.removeViewAt(marker);note("Katalog belum tersedia: "+e);});
+        request("/api/v1/browse/anichin?feed=popular&page=1",j->{section("Populer");renderCards(extractItems(j));},e->{});
     }
     private void button(LinearLayout parent,String label,Runnable action,boolean primary){
         TextView b=text(label,13,TEXT,true); b.setGravity(Gravity.CENTER); b.setPadding(dp(15),dp(12),dp(15),dp(12));
@@ -155,13 +155,13 @@ public class MainActivity extends Activity {
         input.setPadding(dp(14),0,dp(14),0);input.setBackground(shape(PANEL,12));content.addView(input,new LinearLayout.LayoutParams(-1,dp(50)));
         LinearLayout results=new LinearLayout(this);results.setOrientation(LinearLayout.VERTICAL);content.addView(results);
         input.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){} public void onTextChanged(CharSequence s,int st,int before,int count){
-            String q=s.toString().trim(); if(q.length()<2)return; try{String encoded=URLEncoder.encode(q,"UTF-8");request("/search?q="+encoded+"&page=1",j->{results.removeAllViews();LinearLayout old=content;content=results;renderCards(extractItems(j));content=old;},e->{});
+            String q=s.toString().trim(); if(q.length()<2)return; try{String encoded=URLEncoder.encode(q,"UTF-8");request("/api/v1/search?q="+encoded+"&source=donghua&page=1",j->{results.removeAllViews();LinearLayout old=content;content=results;renderCards(extractItems(j));content=old;},e->{});
             }catch(Exception ignored){}
         }public void afterTextChanged(Editable e){}});
     }
     private void showDetail(String slug,String title){
         base(title,true); note("Memuat detail...");
-        request("/detail/"+Uri.encode(slug),j->{
+        request("/api/v1/donghua/"+Uri.encode(slug),j->{
             content.removeAllViews();JSONObject data=j.optJSONObject("data");if(data==null)data=j;
             JSONObject detail=data.optJSONObject("detail");if(detail!=null)data=detail;
             String desc=first(data,"synopsis","description","desc");
@@ -182,7 +182,7 @@ public class MainActivity extends Activity {
     }
     private void loadEpisode(String slug,String title){
         base(title,true);note("Memuat sumber video...");
-        request("/episode/"+Uri.encode(slug),j->{
+        request("/api/v1/donghua/episode/"+Uri.encode(slug),j->{
             JSONObject data=j.optJSONObject("data");if(data==null)data=j;
             String direct=findVideo(data);
             if(direct.isEmpty()){
