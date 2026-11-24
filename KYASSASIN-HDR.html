@@ -176,8 +176,21 @@ $("#photoFile").onchange=e=>{
    enhancedFile=await canvasFile();
    if(!enhancedFile)throw new Error("Gagal menyiapkan foto");
    selectedFile=enhancedFile;
-   $("#photoStatus").textContent="Selesai! Foto sudah ditingkatkan otomatis. Tekan Bagikan hasil untuk memilih WhatsApp, WhatsApp Business, atau aplikasi lain.";
+   $("#photoStatus").textContent="Selesai! Membuka menu berbagi...";
    $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
+   // Coba langsung membuka Android Sharesheet setelah foto selesai diproses.
+   // Jika browser menolak karena batasan aktivasi pengguna, tombol Bagikan tetap tersedia.
+   try{
+    if(navigator.canShare?.({files:[enhancedFile]})){
+     await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});
+     $("#photoStatus").textContent="Foto berhasil dibagikan.";
+    }else{
+     $("#photoStatus").textContent="Foto selesai. Tekan Bagikan hasil untuk memilih aplikasi.";
+    }
+   }catch(shareErr){
+    if(shareErr.name==="AbortError")$("#photoStatus").textContent="Foto selesai. Kamu membatalkan menu berbagi.";
+    else $("#photoStatus").textContent="Foto selesai. Tekan Bagikan hasil untuk memilih aplikasi.";
+   }
   }catch(err){
    $("#photoStatus").textContent="Foto gagal diproses. Coba foto dengan ukuran lebih kecil.";
   }
@@ -204,8 +217,8 @@ $("#shareBtn").onclick=async()=>{
 };
 $("#videoFile").onchange=e=>{let f=e.target.files[0];if(f){selectedFile=f;$("#videoPreview").src=URL.createObjectURL(f)}};
 $("#shareBtn").onclick=async()=>{
- if(!selectedFile)return alert("Pilih foto/video dulu.");
- try{if(navigator.canShare?.({files:[selectedFile]}))await navigator.share({files:[selectedFile],title:"Hasil KYASSASIN HDR"});else alert("Simpan file lalu bagikan melalui galeri.")}
- catch(e){if(e.name!=="AbortError")alert(e.message)}
+ if(!enhancedFile)return;
+ try{if(navigator.canShare?.({files:[enhancedFile]}))await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});else alert("Menu berbagi tidak didukung. Simpan foto lalu bagikan dari Galeri.")}
+ catch(e){if(e.name!=="AbortError")alert("Menu berbagi gagal dibuka. Coba tekan Bagikan hasil lagi.")}
 };
 </script></body></html>
