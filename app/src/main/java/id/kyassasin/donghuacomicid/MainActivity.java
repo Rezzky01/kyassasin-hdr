@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
         b.setBackground(shape(primary?ACCENT:PANEL,12)); LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(44),1); p.setMargins(0,dp(4),dp(8),dp(4)); parent.addView(b,p); b.setOnClickListener(v->action.run());
     }
     private JSONArray extractItems(JSONObject j){
-        JSONArray direct=findArray(j,"latest","popular","anime","result","items","lists","ongoing","data","series","slide");
+        JSONArray direct=findArray(j,"latest","popular","anime","result","items","lists","ongoing","data","series","slide","latest_release","popular_today","recommendation");
         if(direct!=null)return direct; return new JSONArray();
     }
     private JSONArray findArray(Object obj,String... keys){
@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
     private String findVideo(Object obj){
         if(obj instanceof JSONObject){
             JSONObject o=(JSONObject)obj;
-            String v=first(o,"video_url","videoUrl","file","src","mp4","hls","stream_url");
+            String v=first(o,"video_url","videoUrl","file","src","mp4","hls","stream_url","server_url","download_url","url");
             if(v.startsWith("https://")||v.startsWith("http://")){
                 String low=v.toLowerCase();if(low.contains(".mp4")||low.contains(".m3u8"))return v;
             }
