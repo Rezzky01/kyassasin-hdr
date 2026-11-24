@@ -110,8 +110,11 @@ public class MainActivity extends Activity {
         if(obj instanceof JSONObject){
             JSONObject o=(JSONObject)obj;
             for(String k:keys){Object v=o.opt(k); if(v instanceof JSONArray)return (JSONArray)v;}
-            for(String k:keys){Object v=o.opt(k); if(v instanceof JSONObject){JSONArray a=findArray(v,keys);if(a!=null)return a;}}
-            Iterator<String> it=o.keys(); while(it.hasNext()){Object v=o.opt(it.next());if(v instanceof JSONObject){JSONArray a=findArray(v,keys);if(a!=null)return a;}}
+            Iterator<String> it=o.keys();
+            while(it.hasNext()){Object v=o.opt(it.next()); if(v instanceof JSONObject || v instanceof JSONArray){JSONArray a=findArray(v,keys);if(a!=null)return a;}}
+        } else if(obj instanceof JSONArray){
+            JSONArray a=(JSONArray)obj;
+            for(int i=0;i<a.length();i++){JSONArray found=findArray(a.opt(i),keys);if(found!=null)return found;}
         }
         return null;
     }
@@ -160,6 +163,7 @@ public class MainActivity extends Activity {
         base(title,true); note("Memuat detail...");
         request("/detail/"+Uri.encode(slug),j->{
             content.removeAllViews();JSONObject data=j.optJSONObject("data");if(data==null)data=j;
+            JSONObject detail=data.optJSONObject("detail");if(detail!=null)data=detail;
             String desc=first(data,"synopsis","description","desc");
             if(!desc.isEmpty()){TextView d=text(desc,13,MUTED,false);d.setPadding(0,0,0,dp(16));content.addView(d);}
             section("Daftar Episode");
