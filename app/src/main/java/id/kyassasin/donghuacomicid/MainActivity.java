@@ -40,14 +40,14 @@ public class MainActivity extends Activity {
         "if(!/^(https?:)?\\/\\/(www\\.)?anichin\\.moe/i.test(location.href))return;" +
         "var id='kyassasin-brand-style';" +
         "if(!document.getElementById(id)){" +
-        "var css='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img{opacity:0!important;width:0!important;height:0!important;display:none!important}'+
-        'header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a{font-size:0!important;text-decoration:none!important}'+
-        'header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after{content:"KyassasinDev"!important;display:inline-block!important;font:800 22px/1.2 Arial,sans-serif!important;letter-spacing:.4px!important;color:#a78bfa!important;padding:8px 4px!important}'+
-        'html,body{overscroll-behavior-y:contain}video,iframe{max-width:100%}';" +
+        "var css='header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img{display:none!important}'+"
+        "'header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a{font-size:0!important;text-decoration:none!important}'+"
+        "'header .logo a:after,header .site-logo a:after,header #logo a:after,.site-header .logo a:after,.site-branding a:after,#logo a:after,.logo a:after{content:attr(data-brand)!important;display:inline-block!important;font:800 22px/1.2 Arial,sans-serif!important;letter-spacing:.4px!important;color:#a78bfa!important;padding:8px 4px!important}'+"
+        "'html,body{overscroll-behavior-y:contain}video,iframe{max-width:100%}';" +
         "var st=document.createElement('style');st.id=id;st.textContent=css;(document.head||document.documentElement).appendChild(st);" +
         "}" +
         "document.querySelectorAll('header .logo img,header .site-logo img,header #logo img,.site-header .logo img,.site-branding img,#logo img,.logo img').forEach(function(img){img.style.display='none';});" +
-        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a').forEach(function(a){if(!a.dataset.kyassasinBrand){a.dataset.kyassasinBrand='1';a.setAttribute('aria-label','KyassasinDev');}});" +
+        "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a').forEach(function(a){a.setAttribute('data-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
         "}catch(e){}})();";
 
     @Override public void onCreate(Bundle state) {
@@ -65,8 +65,7 @@ public class MainActivity extends Activity {
         progress.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(167, 139, 250)));
         progress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 32, 48)));
         root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
-        FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(-1, dp(2));
-        root.addView(progress, progressParams);
+        root.addView(progress, new FrameLayout.LayoutParams(-1, dp(2)));
         setContentView(root);
 
         WebSettings settings = webView.getSettings();
