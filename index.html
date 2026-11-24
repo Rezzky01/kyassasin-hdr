@@ -29,7 +29,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
-  <div class="card"><h2>Auto HDR Ultra Jernih</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto. Peningkatan kejernihan, pencahayaan, detail, dan warna berjalan otomatis.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto" disabled>Simpan foto jernih</button><button id="shareBtn" disabled>Bagikan ke Status WhatsApp</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
+  <div class="card"><h2>Auto HDR Ultra Jernih</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto. Peningkatan kejernihan, pencahayaan, detail, dan warna berjalan otomatis.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto" disabled>Simpan foto jernih</button><button id="shareBtn" disabled>Bagikan hasil ke aplikasi lain</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
   <div class="card"><h2>Pratinjau video</h2><input type="file" id="videoFile" accept="video/*"><video id="videoPreview" class="preview" controls></video><p class="muted">Versi ini hanya pratinjau video; ekspor video HDR belum tersedia.</p></div>
   
  </section>
@@ -176,7 +176,7 @@ $("#photoFile").onchange=e=>{
    enhancedFile=await canvasFile();
    if(!enhancedFile)throw new Error("Gagal menyiapkan foto");
    selectedFile=enhancedFile;
-   $("#photoStatus").textContent="Selesai! Foto sudah ditingkatkan otomatis. Tekan Bagikan ke Status WhatsApp untuk melanjutkan.";
+   $("#photoStatus").textContent="Selesai! Foto sudah ditingkatkan otomatis. Tekan Bagikan hasil untuk memilih WhatsApp, WhatsApp Business, atau aplikasi lain.";
    $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
   }catch(err){
    $("#photoStatus").textContent="Foto gagal diproses. Coba foto dengan ukuran lebih kecil.";
@@ -196,16 +196,16 @@ $("#shareBtn").onclick=async()=>{
  if(!enhancedFile)return;
  try{
   if(navigator.canShare?.({files:[enhancedFile]})){
-   await navigator.share({files:[enhancedFile],title:"KYASSASIN HDR - Foto Jernih"});
+   await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});
   }else{
-   alert("Perangkat tidak mendukung berbagi foto langsung. Tekan Simpan foto jernih, lalu pilih foto dari Galeri untuk Status WhatsApp.");
+   alert("Menu berbagi tidak didukung perangkat ini. Simpan foto jernih, lalu bagikan dari Galeri ke WhatsApp, WhatsApp Business, atau aplikasi lain.");
   }
  }catch(err){if(err.name!=="AbortError")alert("Gagal membuka menu berbagi. Simpan foto lalu bagikan dari Galeri.")}
 };
 $("#videoFile").onchange=e=>{let f=e.target.files[0];if(f){selectedFile=f;$("#videoPreview").src=URL.createObjectURL(f)}};
 $("#shareBtn").onclick=async()=>{
  if(!selectedFile)return alert("Pilih foto/video dulu.");
- try{if(navigator.canShare?.({files:[selectedFile]}))await navigator.share({files:[selectedFile],title:"KYASSASIN HDR"});else alert("Simpan file lalu bagikan melalui galeri.")}
+ try{if(navigator.canShare?.({files:[selectedFile]}))await navigator.share({files:[selectedFile],title:"Hasil KYASSASIN HDR"});else alert("Simpan file lalu bagikan melalui galeri.")}
  catch(e){if(e.name!=="AbortError")alert(e.message)}
 };
 </script></body></html>
