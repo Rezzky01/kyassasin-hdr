@@ -15,7 +15,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.muted,.small{color:var(--muted);font-size:13px}.hidden{display:none!important}.status{padding:10px;border-radius:10px;background:var(--panel2);margin:10px 0;white-space:pre-wrap}
 .tabs,.nav{display:flex;gap:7px;flex-wrap:wrap}.tabs button,.nav button{width:auto;flex:1;min-width:90px}
 .topline{display:flex;justify-content:space-between;align-items:center;gap:10px}.topline button{width:auto}.preview{width:100%;max-height:340px;object-fit:contain;background:#08080c;border-radius:12px;margin-top:8px}
-.chatlog{height:300px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}.bubble{padding:9px 11px;background:var(--panel2);border-radius:12px;margin:7px 0;max-width:90%;overflow-wrap:anywhere}.bubble.mine{margin-left:auto;border:1px solid var(--accent)}.bubble .small{display:block;margin-top:4px}.userrow{padding:10px 0;border-bottom:1px solid var(--line)}.badge{font-size:11px;padding:3px 7px;border-radius:20px;background:var(--panel2);color:var(--accent)}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 14px}.mode-card{display:flex;gap:9px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);cursor:pointer}.mode-card input{width:auto;margin:3px 0;accent-color:var(--accent)}.mode-card span{display:grid;gap:5px}.mode-card small{font-size:12px;color:var(--muted);line-height:1.4}.file-label{display:block;font-weight:700;margin-top:12px}.file-label+input{margin-top:4px}progress{width:100%;height:10px;accent-color:var(--accent);margin-top:8px}@media(max-width:560px){.mode-grid{grid-template-columns:1fr}}.chatlog{height:300px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}.bubble{padding:9px 11px;background:var(--panel2);border-radius:12px;margin:7px 0;max-width:90%;overflow-wrap:anywhere}.bubble.mine{margin-left:auto;border:1px solid var(--accent)}.bubble .small{display:block;margin-top:4px}.userrow{padding:10px 0;border-bottom:1px solid var(--line)}.badge{font-size:11px;padding:3px 7px;border-radius:20px;background:var(--panel2);color:var(--accent)}
 @media(max-width:560px){.row{flex-wrap:wrap}.row>*{min-width:100%}.topline{align-items:flex-start}}
 </style></head>
 <body><div class="wrap">
@@ -29,9 +29,22 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
-  <div class="card"><h2>Auto HDR Ultra Jernih</h2><input type="file" id="photoFile" accept="image/*"><p class="muted">Pilih foto. Peningkatan kejernihan, pencahayaan, detail, dan warna berjalan otomatis.</p><canvas id="canvas" class="preview"></canvas><div class="row"><button class="secondary" id="savePhoto" disabled>Simpan foto jernih</button><button id="shareBtn" disabled>Bagikan hasil ke aplikasi lain</button></div><p class="muted" id="photoStatus">Menunggu foto dipilih.</p></div>
-  <div class="card"><h2>Pratinjau video</h2><input type="file" id="videoFile" accept="video/*"><video id="videoPreview" class="preview" controls></video><p class="muted">Versi ini hanya pratinjau video; ekspor video HDR belum tersedia.</p></div>
-  
+  <div class="card">
+   <h2>Recovery Foto & Video Otomatis</h2>
+   <p class="muted">Pilih gaya pemulihan, lalu pilih foto atau video. Pemrosesan dimulai otomatis.</p>
+   <div class="mode-grid">
+    <label class="mode-card"><input type="radio" name="recoveryMode" value="wink" checked><span><b>Wink Style</b><small>Warna lebih hidup, cahaya hangat, tampilan lembut untuk selfie dan wajah.</small></span></label>
+    <label class="mode-card"><input type="radio" name="recoveryMode" value="natural"><span><b>Natural HD</b><small>Kontras dan detail ringan dengan hasil yang lebih natural.</small></span></label>
+   </div>
+   <label class="file-label" for="photoFile">Pilih Foto</label><input type="file" id="photoFile" accept="image/*">
+   <label class="file-label" for="videoFile">Pilih Video</label><input type="file" id="videoFile" accept="video/*">
+   <canvas id="canvas" class="preview"></canvas>
+   <video id="videoPreview" class="preview" controls playsinline></video>
+   <progress id="videoProgress" value="0" max="100"></progress>
+   <p class="muted" id="photoStatus">Menunggu foto atau video dipilih.</p>
+   <div class="row"><button class="secondary" id="savePhoto" disabled>Simpan hasil</button><button id="shareBtn" disabled>Bagikan lagi</button></div>
+   <p class="muted">Setelah pemrosesan, aplikasi akan mencoba langsung membuka menu berbagi Android untuk WhatsApp, WhatsApp Business, atau aplikasi lain.</p>
+  </div>
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna yang sudah login. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
  <section id="page-vip" class="page hidden"><div class="card"><h2>Keanggotaan VIP</h2><p id="vipState">Memuat status VIP...</p><p class="muted">Mau VIP? Hubungi admin 6285352860012</p></div></section>
@@ -139,86 +152,181 @@ async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),pat
 
 $("#theme").onchange=()=>document.documentElement.dataset.theme=$("#theme").value;
 let canvas=$("#canvas"),ctx=canvas.getContext("2d"),enhancedFile=null;
-function autoEnhance(img){
- const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
- canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
- canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
- ctx.filter="brightness(1.07) contrast(1.22) saturate(1.16)";
- ctx.drawImage(img,0,0,canvas.width,canvas.height);
+let currentOutputUrl=null,videoSourceUrl=null,activeProcessing=false;
+const currentRecoveryMode=()=>document.querySelector('input[name="recoveryMode"]:checked')?.value||"wink";
+function lookSettings(mode){
+ return mode==="wink"
+  ? "brightness(1.075) contrast(1.065) saturate(1.16) sepia(0.025)"
+  : "brightness(1.035) contrast(1.105) saturate(1.07)";
+}
+function paintFrame(source,w,h,mode){
+ ctx.filter=lookSettings(mode);
+ ctx.drawImage(source,0,0,w,h);
  ctx.filter="none";
- const frame=ctx.getImageData(0,0,canvas.width,canvas.height),src=frame.data;
- const copy=new Uint8ClampedArray(src),w=canvas.width,h=canvas.height;
- // Penajaman detail ringan dengan kernel 3x3, tetap menjaga warna.
+}
+function sharpenNatural(){
+ const frame=ctx.getImageData(0,0,canvas.width,canvas.height),data=frame.data;
+ const src=new Uint8ClampedArray(data),w=canvas.width,h=canvas.height;
  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
   const i=(y*w+x)*4;
   for(let c=0;c<3;c++){
-   const v=copy[i+c]*5-copy[i-4+c]-copy[i+4+c]-copy[i-w*4+c]-copy[i+w*4+c];
-   src[i+c]=Math.max(0,Math.min(255,v));
+   const v=src[i+c]*1.18-(src[i-4+c]+src[i+4+c]+src[i-w*4+c]+src[i+w*4+c])*0.045;
+   data[i+c]=Math.max(0,Math.min(255,v));
   }
  }
  ctx.putImageData(frame,0,0);
 }
-function canvasFile(){
- return new Promise(resolve=>canvas.toBlob(blob=>{
-  if(!blob)return resolve(null);
-  resolve(new File([blob],"KYASSASIN-HDR-jernih.jpg",{type:"image/jpeg",lastModified:Date.now()}));
- },"image/jpeg",.96));
+function resetResult(){
+ enhancedFile=null;
+ $("#savePhoto").disabled=true;
+ $("#shareBtn").disabled=true;
+ $("#videoProgress").value=0;
+ $("#canvas").style.display="none";
+ $("#videoPreview").style.display="none";
+ if(currentOutputUrl){URL.revokeObjectURL(currentOutputUrl);currentOutputUrl=null}
 }
-$("#photoFile").onchange=e=>{
- const f=e.target.files[0];if(!f)return;
- selectedFile=f;enhancedFile=null;$("#savePhoto").disabled=true;$("#shareBtn").disabled=true;
- $("#photoStatus").textContent="Sedang menjernihkan foto otomatis...";
- const url=URL.createObjectURL(f),img=new Image();
- img.onload=async()=>{
-  sourceImage=img;
-  try{
-   autoEnhance(img);
-   enhancedFile=await canvasFile();
-   if(!enhancedFile)throw new Error("Gagal menyiapkan foto");
-   selectedFile=enhancedFile;
-   $("#photoStatus").textContent="Selesai! Membuka menu berbagi...";
-   $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
-   // Coba langsung membuka Android Sharesheet setelah foto selesai diproses.
-   // Jika browser menolak karena batasan aktivasi pengguna, tombol Bagikan tetap tersedia.
-   try{
-    if(navigator.canShare?.({files:[enhancedFile]})){
-     await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});
-     $("#photoStatus").textContent="Foto berhasil dibagikan.";
-    }else{
-     $("#photoStatus").textContent="Foto selesai. Tekan Bagikan hasil untuk memilih aplikasi.";
-    }
-   }catch(shareErr){
-    if(shareErr.name==="AbortError")$("#photoStatus").textContent="Foto selesai. Kamu membatalkan menu berbagi.";
-    else $("#photoStatus").textContent="Foto selesai. Tekan Bagikan hasil untuk memilih aplikasi.";
-   }
-  }catch(err){
-   $("#photoStatus").textContent="Foto gagal diproses. Coba foto dengan ukuran lebih kecil.";
-  }
-  URL.revokeObjectURL(url);
- };
- img.onerror=()=>{URL.revokeObjectURL(url);$("#photoStatus").textContent="Foto tidak dapat dibuka. Coba pilih foto lain."};
- img.src=url;
-};
-$("#savePhoto").onclick=()=>{
+function saveResult(){
  if(!enhancedFile)return;
  const url=URL.createObjectURL(enhancedFile),a=document.createElement("a");
- a.href=url;a.download="KYASSASIN-HDR-jernih.jpg";a.click();
- setTimeout(()=>URL.revokeObjectURL(url),1500);
-};
-$("#shareBtn").onclick=async()=>{
- if(!enhancedFile)return;
+ a.href=url;a.download=enhancedFile.name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+async function shareResult(file,kind){
+ if(!file)return false;
  try{
-  if(navigator.canShare?.({files:[enhancedFile]})){
-   await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});
-  }else{
-   alert("Menu berbagi tidak didukung perangkat ini. Simpan foto jernih, lalu bagikan dari Galeri ke WhatsApp, WhatsApp Business, atau aplikasi lain.");
+  if(!navigator.canShare||!navigator.canShare({files:[file]})){
+   $("#photoStatus").textContent="Hasil selesai, tetapi browser ini tidak menyediakan berbagi file otomatis. Tombol Bagikan lagi bisa dicoba.";
+   return false;
   }
- }catch(err){if(err.name!=="AbortError")alert("Gagal membuka menu berbagi. Simpan foto lalu bagikan dari Galeri.")}
+  await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil pemulihan otomatis KYASSASIN HDR"});
+  $("#photoStatus").textContent="Menu berbagi selesai. Pilih aplikasi tujuan di Android.";
+  return true;
+ }catch(err){
+  if(err.name==="AbortError")$("#photoStatus").textContent="Pemrosesan selesai. Menu berbagi ditutup tanpa memilih aplikasi.";
+  else $("#photoStatus").textContent="Pemrosesan selesai, tetapi browser memblokir pembukaan menu berbagi otomatis. Coba Bagikan lagi.";
+  return false;
+ }
+}
+function makePhotoFile(){
+ return new Promise(resolve=>canvas.toBlob(blob=>{
+  if(!blob)return resolve(null);
+  resolve(new File([blob],"KYASSASIN-HDR-"+currentRecoveryMode()+".jpg",{type:"image/jpeg",lastModified:Date.now()}));
+ },"image/jpeg",.95));
+}
+$("#photoFile").onchange=async e=>{
+ const file=e.target.files?.[0];if(!file||activeProcessing)return;
+ resetResult();activeProcessing=true;
+ $("#videoFile").value="";
+ $("#photoStatus").textContent="Memulihkan foto otomatis...";
+ const mode=currentRecoveryMode(),sourceUrl=URL.createObjectURL(file),img=new Image();
+ img.onload=async()=>{
+  try{
+   const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
+   canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+   canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   paintFrame(img,canvas.width,canvas.height,mode);
+   if(mode==="natural")sharpenNatural();
+   enhancedFile=await makePhotoFile();
+   if(!enhancedFile)throw new Error("Tidak dapat membuat file hasil");
+   $("#canvas").style.display="block";
+   $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
+   $("#photoStatus").textContent="Foto selesai dipulihkan ("+(mode==="wink"?"Wink Style":"Natural HD")+"). Membuka menu berbagi...";
+   await shareResult(enhancedFile,"Foto");
+  }catch(err){
+   $("#photoStatus").textContent="Foto gagal diproses: "+(err?.message||"coba file lain");
+  }finally{
+   activeProcessing=false;URL.revokeObjectURL(sourceUrl);
+  }
+ };
+ img.onerror=()=>{activeProcessing=false;URL.revokeObjectURL(sourceUrl);$("#photoStatus").textContent="Foto tidak dapat dibaca. Coba file foto lain."};
+ img.src=sourceUrl;
 };
-$("#videoFile").onchange=e=>{let f=e.target.files[0];if(f){selectedFile=f;$("#videoPreview").src=URL.createObjectURL(f)}};
-$("#shareBtn").onclick=async()=>{
- if(!enhancedFile)return;
- try{if(navigator.canShare?.({files:[enhancedFile]}))await navigator.share({files:[enhancedFile],title:"Hasil KYASSASIN HDR",text:"Foto hasil Auto HDR"});else alert("Menu berbagi tidak didukung. Simpan foto lalu bagikan dari Galeri.")}
- catch(e){if(e.name!=="AbortError")alert("Menu berbagi gagal dibuka. Coba tekan Bagikan hasil lagi.")}
+async function waitForMetadata(video){
+ if(video.readyState>=1)return;
+ await new Promise((resolve,reject)=>{
+  const done=()=>{cleanup();resolve()},fail=()=>{cleanup();reject(new Error("Metadata video tidak dapat dibaca"))};
+  const cleanup=()=>{video.removeEventListener("loadedmetadata",done);video.removeEventListener("error",fail)};
+  video.addEventListener("loadedmetadata",done,{once:true});
+  video.addEventListener("error",fail,{once:true});
+ });
+}
+function chooseRecorderType(){
+ const types=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+ return types.find(t=>window.MediaRecorder?.isTypeSupported?.(t))||"";
+}
+async function processVideo(file){
+ const video=$("#videoPreview"),mode=currentRecoveryMode();
+ if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream||(!video.captureStream&&!video.mozCaptureStream)){
+  throw new Error("Browser tidak mendukung ekspor video. Coba Chrome Android versi terbaru.");
+ }
+ if(videoSourceUrl)URL.revokeObjectURL(videoSourceUrl);
+ videoSourceUrl=URL.createObjectURL(file);
+ video.src=videoSourceUrl;video.controls=false;video.playsInline=true;video.volume=0;video.muted=false;video.load();
+ await waitForMetadata(video);
+ if(!Number.isFinite(video.duration)||video.duration<=0)throw new Error("Durasi video tidak valid");
+ const vw=video.videoWidth,vh=video.videoHeight;
+ if(!vw||!vh)throw new Error("Resolusi video tidak terbaca");
+ const scale=Math.min(1,1920/Math.max(vw,vh));
+ canvas.width=Math.max(1,Math.round(vw*scale));canvas.height=Math.max(1,Math.round(vh*scale));
+ $("#canvas").style.display="block";video.currentTime=0;
+ await new Promise(resolve=>{if(video.currentTime===0)resolve();else video.addEventListener("seeked",resolve,{once:true})});
+ paintFrame(video,canvas.width,canvas.height,mode);
+ const canvasStream=canvas.captureStream(30);
+ const sourceStream=video.captureStream?video.captureStream():video.mozCaptureStream();
+ const tracks=[...canvasStream.getVideoTracks(),...sourceStream.getAudioTracks()];
+ if(!tracks.length)throw new Error("Tidak dapat membuat aliran video");
+ const mixedStream=new MediaStream(tracks),mimeType=chooseRecorderType();
+ const opts={videoBitsPerSecond:5000000,audioBitsPerSecond:128000};
+ if(mimeType)opts.mimeType=mimeType;
+ const recorder=new MediaRecorder(mixedStream,opts),chunks=[];
+ const stopped=new Promise((resolve,reject)=>{
+  recorder.ondataavailable=ev=>{if(ev.data&&ev.data.size)chunks.push(ev.data)};
+  recorder.onerror=ev=>reject(ev.error||new Error("Perekaman video gagal"));
+  recorder.onstop=()=>resolve();
+ });
+ let raf=0;
+ const draw=()=>{
+  if(video.readyState>=2)paintFrame(video,canvas.width,canvas.height,mode);
+  const pct=Math.min(99,Math.round(video.currentTime/video.duration*100));
+  $("#videoProgress").value=pct;
+  $("#photoStatus").textContent="Memulihkan video... "+pct+"%";
+  if(!video.ended&&!video.paused)raf=requestAnimationFrame(draw);
+ };
+ video.onended=()=>{if(raf)cancelAnimationFrame(raf);if(recorder.state!=="inactive")recorder.stop()};
+ recorder.start(500);
+ try{
+  await video.play();
+  draw();
+  await stopped;
+ }catch(err){
+  if(recorder.state!=="inactive")recorder.stop();
+  throw err;
+ }finally{
+  if(raf)cancelAnimationFrame(raf);
+  mixedStream.getTracks().forEach(t=>t.stop());
+  sourceStream.getTracks().forEach(t=>t.stop());
+  video.onended=null;video.controls=true;
+ }
+ const type=recorder.mimeType||mimeType||"video/webm";
+ const blob=new Blob(chunks,{type});
+ if(!blob.size)throw new Error("File hasil video kosong");
+ const ext=type.includes("mp4")?"mp4":"webm";
+ return new File([blob],"KYASSASIN-HDR-"+mode+"."+ext,{type,lastModified:Date.now()});
+}
+$("#videoFile").onchange=async e=>{
+ const file=e.target.files?.[0];if(!file||activeProcessing)return;
+ resetResult();$("#photoFile").value="";activeProcessing=true;
+ $("#photoStatus").textContent="Menyiapkan pemulihan video...";
+ try{
+  enhancedFile=await processVideo(file);
+  $("#videoProgress").value=100;
+  $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
+  $("#photoStatus").textContent="Video selesai dipulihkan ("+(currentRecoveryMode()==="wink"?"Wink Style":"Natural HD")+"). Membuka menu berbagi...";
+  await shareResult(enhancedFile,"Video");
+ }catch(err){
+  $("#photoStatus").textContent="Video belum berhasil diekspor: "+(err?.message||"browser tidak mendukung fitur ini");
+ }finally{activeProcessing=false}
 };
+$("#savePhoto").onclick=saveResult;
+$("#shareBtn").onclick=async()=>{if(enhancedFile)await shareResult(enhancedFile,enhancedFile.type.startsWith("video/")?"Video":"Foto")};
 </script></body></html>
