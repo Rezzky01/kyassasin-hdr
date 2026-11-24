@@ -67,6 +67,8 @@ public class MainActivity extends Activity {
         "document.querySelectorAll('header .logo a,header .site-logo a,header #logo a,.site-header .logo a,.site-branding a,#logo a,.logo a,.c-header__logo a').forEach(function(a){a.setAttribute('data-ky-brand','KyassasinDev');a.setAttribute('aria-label','KyassasinDev');});" +
         "var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);var n;while(n=w.nextNode()){if(/anichin\\s*care/i.test(n.nodeValue)){n.nodeValue=n.nodeValue.replace(/anichin\\s*care/ig,'KyassasinDev');}}" +
         "document.querySelectorAll('[alt],[title],[aria-label]').forEach(function(e){['alt','title','aria-label'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin\\s*care/i.test(v))e.setAttribute(k,v.replace(/anichin\\s*care/ig,'KyassasinDev'));});});" +
+        "if(document.title&&/anichin\\s*care/i.test(document.title))document.title=document.title.replace(/anichin\\s*care/ig,'KyassasinDev');" +
+        "document.querySelectorAll('input[placeholder],textarea[placeholder],input[value],meta[content]').forEach(function(e){['placeholder','value','content'].forEach(function(k){var v=e.getAttribute(k);if(v&&/anichin\\s*care/i.test(v))e.setAttribute(k,v.replace(/anichin\\s*care/ig,'KyassasinDev'));});});" +
         "}" +
         "rebrand();if(!window.__kyassasinObserver){window.__kyassasinObserver=new MutationObserver(function(){rebrand();});window.__kyassasinObserver.observe(document.documentElement,{childList:true,subtree:true,characterData:true});}" +
         "}catch(e){}})();";
