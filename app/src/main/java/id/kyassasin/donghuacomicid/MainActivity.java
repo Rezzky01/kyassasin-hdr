@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
             JSONObject o=items.optJSONObject(i); if(o==null)continue;
             String title=first(o,"title","name","anime_title"); if(title.isEmpty())title="Donghua";
             String image=first(o,"thumbnail","thumb","image","poster","cover");
-            String s=slug(o); String meta=first(o,"episode","latest_episode","type","status");
+            final String cardTitle=title; String s=slug(o); String meta=first(o,"episode","latest_episode","type","status");
             LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.HORIZONTAL); card.setPadding(dp(9),dp(9),dp(9),dp(9)); card.setBackground(shape(PANEL,14));
             LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(126)); cp.setMargins(0,0,0,dp(10)); content.addView(card,cp);
             ImageView cover=new ImageView(this); cover.setScaleType(ImageView.ScaleType.CENTER_CROP); cover.setBackground(shape(0xFF252B3C,10));
@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
             TextView name=text(title,15,TEXT,true); name.setMaxLines(3); info.addView(name);
             if(!meta.isEmpty()){TextView m=text(meta,11,MUTED,false);m.setPadding(0,dp(7),0,0);info.addView(m);}
             TextView open=text("LIHAT DETAIL  ›",10,ACCENT,true); LinearLayout.LayoutParams op=new LinearLayout.LayoutParams(-2,-2);op.topMargin=dp(9);info.addView(open,op);
-            card.setOnClickListener(v->{if(!s.isEmpty())showDetail(s,title);else Toast.makeText(this,"Detail tidak tersedia untuk item ini",Toast.LENGTH_SHORT).show();});
+            card.setOnClickListener(v->{if(!s.isEmpty())showDetail(s,cardTitle);else Toast.makeText(this,"Detail tidak tersedia untuk item ini",Toast.LENGTH_SHORT).show();});
         }
     }
     private void loadList(String path,String title){
