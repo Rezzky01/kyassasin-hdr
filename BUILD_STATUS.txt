@@ -1,0 +1,6 @@
+DONGHUA COMIC ID
+Source project: prepared
+GitHub Actions workflow: configured for branch pushes
+APK compiled: pending remote build
+APK installed/device-tested: not yet tested
+Playback: depends on Anichin and its embedded video providers
