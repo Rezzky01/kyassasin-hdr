@@ -26,19 +26,19 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <section id="page-home" class="page">
   <div class="card">
    <h2>Recovery Foto & Video Otomatis</h2>
-   <p class="muted">Pilih gaya pemulihan, lalu pilih foto atau video. Pemrosesan dimulai otomatis.</p>
+   <p class="muted">Pilih gaya pemulihan dan file, lalu tekan tombol Pulihkan agar proses dimulai saat kamu siap.</p>
    <div class="mode-grid">
     <label class="mode-card"><input type="radio" name="recoveryMode" value="wink" checked><span><b>Wink Style</b><small>Warna lebih hidup, cahaya hangat, tampilan lembut untuk selfie dan wajah.</small></span></label>
     <label class="mode-card"><input type="radio" name="recoveryMode" value="natural"><span><b>Natural HD</b><small>Kontras dan detail ringan dengan hasil yang lebih natural.</small></span></label>
    </div>
    <label class="file-label" for="photoFile">Pilih Foto</label><input type="file" id="photoFile" accept="image/*">
    <label class="file-label" for="videoFile">Pilih Video</label><input type="file" id="videoFile" accept="video/*">
-   <canvas id="canvas" class="preview"></canvas>
+   <img id="imagePreview" class="preview" alt="Foto yang dipilih" style="display:none"><canvas id="canvas" class="preview" style="display:none"></canvas>
    <video id="videoPreview" class="preview" controls playsinline></video>
    <progress id="videoProgress" value="0" max="100"></progress>
    <p class="muted" id="photoStatus">Menunggu foto atau video dipilih.</p>
-   <div class="row"><button class="secondary" id="savePhoto" disabled>Simpan hasil</button><button id="shareBtn" disabled>Bagikan ke WhatsApp Status</button></div>
-   <p class="muted">Setelah pemrosesan, pilih Bagikan ke WhatsApp Status. Di menu Android pilih WhatsApp, lalu pilih Status saya dan tekan kirim. WhatsApp tetap meminta konfirmasi sebelum Status dipublikasikan.</p>
+   <button id="recoverBtn" disabled>Pulihkan Foto / Video</button><button id="shareBtn" class="hidden" disabled>Bagikan ke WhatsApp Status</button>
+   <p class="muted">Pilih file, tekan Pulihkan Foto atau Pulihkan Video, tunggu sampai status menyatakan selesai, lalu tekan Bagikan ke WhatsApp Status. Pengiriman Status tetap perlu konfirmasi di WhatsApp.</p>
   </div>
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna aplikasi. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
@@ -137,7 +137,7 @@ async function changeUser(uid,patch){try{await updateDoc(doc(db,"users",uid),pat
 
 $("#theme").onchange=()=>document.documentElement.dataset.theme=$("#theme").value;
 let canvas=$("#canvas"),ctx=canvas.getContext("2d"),enhancedFile=null;
-let currentOutputUrl=null,videoSourceUrl=null,activeProcessing=false;
+let currentOutputUrl=null,videoSourceUrl=null,activeProcessing=false,selectedFile=null,selectedKind=null;
 const currentRecoveryMode=()=>document.querySelector('input[name="recoveryMode"]:checked')?.value||"wink";
 function lookSettings(mode){
  return mode==="wink"
@@ -163,32 +163,23 @@ function sharpenNatural(){
 }
 function resetResult(){
  enhancedFile=null;
- $("#savePhoto").disabled=true;
- $("#shareBtn").disabled=true;
+ $("#recoverBtn").disabled=true;
+ $("#shareBtn").disabled=true;$("#shareBtn").classList.add("hidden");
+ $("#imagePreview").style.display="none";
  $("#videoProgress").value=0;
  $("#canvas").style.display="none";
  $("#videoPreview").style.display="none";
  if(currentOutputUrl){URL.revokeObjectURL(currentOutputUrl);currentOutputUrl=null}
 }
-function saveResult(){
- if(!enhancedFile)return;
- const url=URL.createObjectURL(enhancedFile),a=document.createElement("a");
- a.href=url;a.download=enhancedFile.name;a.click();
- setTimeout(()=>URL.revokeObjectURL(url),2000);
-}
 async function shareResult(file,kind){
  if(!file)return false;
  try{
-  if(!navigator.canShare||!navigator.canShare({files:[file]})){
-   $("#photoStatus").textContent="Hasil selesai, tetapi browser ini tidak menyediakan berbagi file otomatis. Tombol Bagikan lagi bisa dicoba.";
-   return false;
-  }
-  await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil pemulihan otomatis KYASSASIN HDR"});
-  $("#photoStatus").textContent="Pilih WhatsApp di menu berbagi, lanjutkan ke Status saya, lalu konfirmasi kirim.";
+  if(!navigator.canShare||!navigator.canShare({files:[file]}))throw new Error("Perangkat belum mendukung berbagi file dari aplikasi. Coba perbarui aplikasi.");
+  await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil recovery KYASSASIN HDR"});
+  $("#photoStatus").textContent="Menu berbagi terbuka. Pilih WhatsApp, lalu Status saya dan konfirmasi kirim.";
   return true;
  }catch(err){
-  if(err.name==="AbortError")$("#photoStatus").textContent="Hasil sudah siap. Tekan Bagikan ke WhatsApp Status, lalu pilih WhatsApp dan Status saya.";
-  else $("#photoStatus").textContent="Hasil sudah siap. Tekan Bagikan ke WhatsApp Status untuk membuka menu berbagi Android.";
+  $("#photoStatus").textContent="Berbagi gagal: "+friendlyError(err)+". Coba lagi setelah hasil recovery siap.";
   return false;
  }
 }
@@ -198,34 +189,45 @@ function makePhotoFile(){
   resolve(new File([blob],"KYASSASIN-HDR-"+currentRecoveryMode()+".jpg",{type:"image/jpeg",lastModified:Date.now()}));
  },"image/jpeg",.95));
 }
-$("#photoFile").onchange=async e=>{
- const file=e.target.files?.[0];if(!file||activeProcessing)return;
- resetResult();activeProcessing=true;
- $("#videoFile").value="";
- $("#photoStatus").textContent="Memulihkan foto otomatis...";
- const mode=currentRecoveryMode(),sourceUrl=URL.createObjectURL(file),img=new Image();
- img.onload=async()=>{
-  try{
-   const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
-   canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
-   canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
-   paintFrame(img,canvas.width,canvas.height,mode);
-   if(mode==="natural")sharpenNatural();
-   enhancedFile=await makePhotoFile();
-   if(!enhancedFile)throw new Error("Tidak dapat membuat file hasil");
-   $("#canvas").style.display="block";
-   $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
-   $("#photoStatus").textContent="Foto selesai dipulihkan ("+(mode==="wink"?"Wink Style":"Natural HD")+"). Membuka menu berbagi...";
-   await shareResult(enhancedFile,"Foto");
-  }catch(err){
-   $("#photoStatus").textContent="Foto gagal diproses: "+(err?.message||"coba file lain");
-  }finally{
-   activeProcessing=false;URL.revokeObjectURL(sourceUrl);
-  }
- };
- img.onerror=()=>{activeProcessing=false;URL.revokeObjectURL(sourceUrl);$("#photoStatus").textContent="Foto tidak dapat dibaca. Coba file foto lain."};
- img.src=sourceUrl;
+$("#photoFile").onchange=e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ resetResult();$("#videoFile").value="";selectedFile=file;selectedKind="photo";
+ const url=URL.createObjectURL(file);$("#imagePreview").src=url;$("#imagePreview").style.display="block";
+ $("#recoverBtn").disabled=false;$("#recoverBtn").textContent="Pulihkan Foto";
+ $("#photoStatus").textContent="Foto dipilih: "+file.name+". Tekan Pulihkan Foto untuk memulai.";
 };
+$("#videoFile").onchange=e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ resetResult();$("#photoFile").value="";selectedFile=file;selectedKind="video";
+ if(videoSourceUrl)URL.revokeObjectURL(videoSourceUrl);
+ videoSourceUrl=URL.createObjectURL(file);$("#videoPreview").src=videoSourceUrl;$("#videoPreview").controls=true;$("#videoPreview").style.display="block";
+ $("#recoverBtn").disabled=false;$("#recoverBtn").textContent="Pulihkan Video";
+ $("#photoStatus").textContent="Video dipilih: "+file.name+". Tekan Pulihkan Video untuk memulai.";
+};
+async function processPhoto(file){
+ const mode=currentRecoveryMode(),sourceUrl=URL.createObjectURL(file),img=new Image();
+ try{
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Foto tidak dapat dibaca. Coba file lain."));img.src=sourceUrl});
+  const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
+  canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+  paintFrame(img,canvas.width,canvas.height,mode);if(mode==="natural")sharpenNatural();
+  enhancedFile=await makePhotoFile();if(!enhancedFile)throw new Error("Tidak dapat membuat file hasil");
+  $("#canvas").style.display="block";
+  $("#photoStatus").textContent="Foto berhasil direcovery ("+(mode==="wink"?"Wink Style":"Natural HD")+"). Hasil siap dibagikan.";
+ }finally{URL.revokeObjectURL(sourceUrl)}
+}
+$("#recoverBtn").onclick=async()=>{
+ if(!selectedFile||activeProcessing)return;
+ activeProcessing=true;$("#recoverBtn").disabled=true;$("#shareBtn").disabled=true;$("#shareBtn").classList.add("hidden");
+ $("#photoStatus").textContent=selectedKind==="photo"?"Sedang memulihkan foto...":"Sedang memulihkan video...";
+ try{
+  if(selectedKind==="photo")await processPhoto(selectedFile);
+  else {enhancedFile=await processVideo(selectedFile);$("#videoProgress").value=100;$("#photoStatus").textContent="Video berhasil direcovery ("+(currentRecoveryMode()==="wink"?"Wink Style":"Natural HD")+"). Hasil siap dibagikan.";}
+  $("#shareBtn").disabled=false;$("#shareBtn").classList.remove("hidden");
+ }catch(err){$("#photoStatus").textContent="Recovery gagal: "+friendlyError(err)}
+ finally{activeProcessing=false;$("#recoverBtn").disabled=false}
+};
+$("#shareBtn").onclick=async()=>{if(enhancedFile)await shareResult(enhancedFile,enhancedFile.type.startsWith("video/")?"Video":"Foto")};
 async function waitForMetadata(video){
  if(video.readyState>=1)return;
  await new Promise((resolve,reject)=>{
@@ -299,20 +301,4 @@ async function processVideo(file){
  const ext=type.includes("mp4")?"mp4":"webm";
  return new File([blob],"KYASSASIN-HDR-"+mode+"."+ext,{type,lastModified:Date.now()});
 }
-$("#videoFile").onchange=async e=>{
- const file=e.target.files?.[0];if(!file||activeProcessing)return;
- resetResult();$("#photoFile").value="";activeProcessing=true;
- $("#photoStatus").textContent="Menyiapkan pemulihan video...";
- try{
-  enhancedFile=await processVideo(file);
-  $("#videoProgress").value=100;
-  $("#savePhoto").disabled=false;$("#shareBtn").disabled=false;
-  $("#photoStatus").textContent="Video selesai dipulihkan ("+(currentRecoveryMode()==="wink"?"Wink Style":"Natural HD")+"). Membuka menu berbagi...";
-  await shareResult(enhancedFile,"Video");
- }catch(err){
-  $("#photoStatus").textContent="Video belum berhasil diekspor: "+(err?.message||"browser tidak mendukung fitur ini");
- }finally{activeProcessing=false}
-};
-$("#savePhoto").onclick=saveResult;
-$("#shareBtn").onclick=async()=>{if(enhancedFile)await shareResult(enhancedFile,enhancedFile.type.startsWith("video/")?"Video":"Foto")};
 </script></body></html>
