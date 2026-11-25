@@ -40,6 +40,14 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 @keyframes yxLoad{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
 .yx-loading-text{color:#eee1ff;font-size:12px;margin-top:9px;letter-spacing:1px}
 @media(prefers-reduced-motion:reduce){#yxWaveArm,#yxBlink,.yx-character,.yx-spark,.yx-loading span{animation-duration:3s}}
+
+#adminCorner{position:fixed;top:10px;right:10px;z-index:1001;width:auto;padding:8px 12px;font-size:12px;border-radius:999px;box-shadow:0 4px 16px #0005}
+#adminLogin{position:fixed;inset:0;z-index:10000;background:#080611d9;display:grid;place-items:center;padding:20px}
+#adminLogin.hidden{display:none!important}
+#adminLogin .login-card{width:min(100%,360px);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 60px #0009}
+#adminLogin .login-card h2{margin:0 0 8px}
+#adminLogin .login-actions{display:flex;gap:8px}
+#adminLogin .login-actions button{flex:1}
 </style></head>
 <body>
 <div id="yuxinOpening" role="status" aria-label="Membuka KYASSASIN HDR">
@@ -65,6 +73,20 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
   <h2 class="yx-title" style="font-size:clamp(20px,5vw,27px);margin-top:-4px">Hallo Rekan Dao!</h2>
   <p class="yx-subtitle">Apa Sudah Menaikan Kultivasi?</p>
   <div class="yx-loading"><span></span></div>
+ </div>
+</div>
+
+<button id="adminCorner" type="button">Admin</button>
+<div id="adminLogin" class="hidden" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+ <div class="login-card">
+  <h2 id="adminLoginTitle">Login Administrator</h2>
+  <p class="muted">Masukkan username dan password admin.</p>
+  <label class="file-label" for="adminUsername">Username</label>
+  <input id="adminUsername" type="text" autocomplete="username" placeholder="Username admin">
+  <label class="file-label" for="adminPassword">Password</label>
+  <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password admin">
+  <p id="adminLoginMessage" class="small" role="alert"></p>
+  <div class="login-actions"><button id="adminLoginSubmit" type="button">Login</button><button id="adminLoginCancel" class="secondary" type="button">Batal</button></div>
  </div>
 </div>
 <div class="wrap">
@@ -106,7 +128,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
   </div>
  </section>
  <section id="page-settings" class="page hidden"><div class="card"><h2>Pilih tema</h2><select id="theme"><option value="dark">Hitam</option><option value="light">Putih</option><option value="purple">Ungu gelap</option><option value="red">Merah</option></select></div></section>
- <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Pengelolaan admin dikunci pada versi gratis tanpa server khusus.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
+ <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Login admin lokal berhasil. Fitur pengelolaan akun dan data server tetap memerlukan hak akses administrator Firebase.</p><div id="adminMsg" class="status">Mode admin lokal aktif pada perangkat ini.</div><div id="usersList"></div></div></section>
 </section>
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module" src="./share-bridge.js"></script>
@@ -122,6 +144,33 @@ const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 await setPersistence(auth,browserLocalPersistence).catch(e=>console.warn("Persistence tidak tersedia:",e));
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
 const say=(id,t)=>$(id).textContent=t;
+const LOCAL_ADMIN_USERNAME="KyassasinDev";
+const LOCAL_ADMIN_PASSWORD="KyassasinDEV";
+function openAdminLogin(){
+ if(isAdmin){showAdminPage();return}
+ $("#adminLoginMessage").textContent="";
+ $("#adminUsername").value="";$("#adminPassword").value="";
+ $("#adminLogin").classList.remove("hidden");
+ $("#adminUsername").focus();
+}
+function closeAdminLogin(){$("#adminLogin").classList.add("hidden")}
+function showAdminPage(){
+ document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+ $("#page-admin").classList.remove("hidden");
+ $("#adminNav").classList.remove("hidden");
+ $("#adminMsg").textContent="Mode admin lokal aktif. Hak akses database Firebase tidak berubah.";
+}
+$("#adminCorner").onclick=openAdminLogin;
+$("#adminLoginCancel").onclick=closeAdminLogin;
+$("#adminLoginSubmit").onclick=()=>{
+ const username=$("#adminUsername").value.trim();
+ const password=$("#adminPassword").value;
+ if(username===LOCAL_ADMIN_USERNAME&&password===LOCAL_ADMIN_PASSWORD){
+  isAdmin=true;closeAdminLogin();$("#adminNav").classList.remove("hidden");showAdminPage();
+ }else{$("#adminLoginMessage").textContent="Username atau password salah."}
+};
+$("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")$("#adminLoginSubmit").click()});
+
 function finishYuxinOpening(){
  const screen=document.getElementById("yuxinOpening");
  if(!screen||screen.classList.contains("closing"))return;
@@ -171,7 +220,7 @@ onAuthStateChanged(auth,async u=>{
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
  document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
  $("#page-"+b.dataset.page).classList.remove("hidden");
- if(b.dataset.page==="admin"&&isAdmin)loadUsers();
+ if(b.dataset.page==="admin"&&isAdmin)$("#adminMsg").textContent="Mode admin lokal aktif. Hak akses database Firebase tidak berubah.";
 });
 
 function startChat(){
