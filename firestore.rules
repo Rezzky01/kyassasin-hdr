@@ -1,71 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     function signedIn() {
       return request.auth != null;
     }
-
-    function isAdmin() {
-      return signedIn()
-        && request.auth.uid == 'fxzhHNEoDmOBQfoLxGoI0HPDR4q1';
-    }
-
-    // Email accounts must verify their email. Phone accounts are verified by Firebase OTP.
-    function verifiedOrAdmin() {
-      return signedIn() && (
-        isAdmin()
-        || request.auth.token.phone_number != null
-        || request.auth.token.email_verified == true
-      );
-    }
-
     function activeUser() {
-      return verifiedOrAdmin()
+      return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.blocked != true;
     }
-
     match /admins/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
-
     match /users/{uid} {
-      allow read: if isAdmin()
-        || (verifiedOrAdmin() && request.auth.uid == uid);
-
-      allow create: if verifiedOrAdmin()
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.uid == uid
-        && request.resource.data.role == (isAdmin() ? 'admin' : 'user')
+        && request.resource.data.role == 'user'
         && request.resource.data.vip == false
-        && request.resource.data.blocked == false;
-
-      // Users may update only their own profile metadata, never role/VIP/block status.
-      allow update: if isAdmin()
-        || (verifiedOrAdmin()
-          && request.auth.uid == uid
-          && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['email', 'phone', 'loginMethod', 'lastLoginAt', 'displayName', 'photoURL']));
-
-      allow delete: if isAdmin();
+        && request.resource.data.blocked == false
+        && request.resource.data.loginMethod == 'anonymous';
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['email', 'phone', 'loginMethod', 'lastLoginAt', 'displayName', 'photoURL']);
+      allow delete: if false;
     }
-
     match /messages/{messageId} {
       allow read: if activeUser();
-
       allow create: if activeUser()
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.get('email', null)
+        && request.resource.data.email == null
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 1000
         && request.resource.data.keys().hasOnly(['uid', 'email', 'text', 'createdAt']);
-
-      allow update, delete: if isAdmin();
+      allow update, delete: if false;
     }
-
     match /{document=**} {
       allow read, write: if false;
     }
