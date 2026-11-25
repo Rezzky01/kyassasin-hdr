@@ -217,7 +217,7 @@ onAuthStateChanged(auth,async u=>{
   await startChat();
   hideConnectionGate();
   finishYuxinOpening();
- }catch(e){console.error("Gagal memuat profil:",e);$("#who").textContent="Mode pemulihan";$("#role").textContent="Firebase belum terhubung";say("#photoStatus","Fitur recovery tetap bisa digunakan. Sinkronisasi Firebase gagal: "+friendlyError(e));finishYuxinOpening()}
+ }catch(e){console.error("Gagal memuat profil:",e);showConnectionGate("Belum bisa masuk ke layanan real-time: "+friendlyError(e)+" Pastikan aturan Firestore terbaru sudah diterbitkan.");}
 });
 
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
