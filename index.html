@@ -64,7 +64,22 @@ const say=(id,t)=>$(id).textContent=t;
 function friendlyError(e){return e?.message||"Terjadi kesalahan. Periksa koneksi internet lalu coba lagi."}
 onAuthStateChanged(auth,async u=>{
  if(unsubChat){unsubChat();unsubChat=null}
- if(!u){currentUser=null;isAdmin=false;$("#app").classList.add("hidden");try{await signInAnonymously(auth)}catch(e){console.error(e)}return}
+ if(!u){
+  currentUser=null;isAdmin=false;
+  $("#app").classList.remove("hidden");
+  $("#who").textContent="Mode pemulihan";
+  $("#role").textContent="Menyiapkan fitur tanpa login";
+  say("#photoStatus","Fitur recovery siap digunakan. Menghubungkan layanan komunitas...");
+  try{await signInAnonymously(auth)}
+  catch(e){
+   console.error("Login anonim gagal:",e);
+   $("#app").classList.remove("hidden");
+   $("#who").textContent="Mode offline";
+   $("#role").textContent="Fitur recovery lokal tersedia";
+   say("#photoStatus","Recovery foto/video tetap bisa digunakan. Layanan komunitas belum tersambung: "+friendlyError(e));
+  }
+  return;
+ }
  currentUser=u;isAdmin=false;
  try{
   const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
