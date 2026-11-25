@@ -47,6 +47,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Pengelolaan admin dikunci pada versi gratis tanpa server khusus.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
 </section>
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
+<script type="module" src="./share-bridge.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInAnonymously,onAuthStateChanged,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -174,8 +175,11 @@ function resetResult(){
 async function shareResult(file,kind){
  if(!file)return false;
  try{
-  if(!navigator.canShare||!navigator.canShare({files:[file]}))throw new Error("Perangkat belum mendukung berbagi file dari aplikasi. Coba perbarui aplikasi.");
-  await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil recovery KYASSASIN HDR"});
+  if(window.KYASSASINShare?.shareFile){
+   await window.KYASSASINShare.shareFile(file,kind);
+  }else if(navigator.canShare&&navigator.canShare({files:[file]})){
+   await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil recovery KYASSASIN HDR"});
+  }else throw new Error("Perangkat belum mendukung berbagi file.");
   $("#photoStatus").textContent="Menu berbagi terbuka. Pilih WhatsApp, lalu Status saya dan konfirmasi kirim.";
   return true;
  }catch(err){
