@@ -1,0 +1,9 @@
+{
+  "appId": "dev.kyassasin.hdr",
+  "appName": "KYASSASIN HDR",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
