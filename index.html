@@ -20,7 +20,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 </style></head>
 <body><div class="wrap">
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
-<section id="app" class="hidden">
+<section id="app">
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><span class="badge">Mode gratis</span></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
@@ -55,7 +55,7 @@ const firebaseConfig={apiKey:"AIzaSyDGb5F4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomai
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 // Masuk otomatis tanpa email, password, atau OTP.
-await setPersistence(auth,browserLocalPersistence);
+await setPersistence(auth,browserLocalPersistence).catch(e=>console.warn("Persistence tidak tersedia:",e));
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
 const say=(id,t)=>$(id).textContent=t;
 
@@ -71,11 +71,11 @@ onAuthStateChanged(auth,async u=>{
   if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:null,phone:null,loginMethod:"anonymous",role:"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
   else await setDoc(userRef,{loginMethod:"anonymous",lastLoginAt:serverTimestamp()},{merge:true});
   const profile=(await getDoc(userRef)).data()||{};
-  if(profile.blocked){$("#app").classList.add("hidden");return}
+  if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";say("#photoStatus","Akun ini dibatasi. Fitur recovery lokal tetap tersedia.");return}
   $("#app").classList.remove("hidden");$("#who").textContent="Pengguna";$("#role").textContent="Masuk otomatis • Akun anonim";
   $("#adminNav").classList.add("hidden");say("#vipState","Status: pengguna reguler. Hubungi admin untuk informasi VIP.");
   startChat();
- }catch(e){console.error("Gagal memuat profil:",e);$("#app").classList.add("hidden")}
+ }catch(e){console.error("Gagal memuat profil:",e);$("#who").textContent="Mode pemulihan";$("#role").textContent="Firebase belum terhubung";say("#photoStatus","Fitur recovery tetap bisa digunakan. Sinkronisasi Firebase gagal: "+friendlyError(e))}
 });
 
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
