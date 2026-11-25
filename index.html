@@ -46,7 +46,8 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module" src="./share-bridge.js"></script>
 <script type="module">
-import { enhanceImageFile } from "./ai-enhancer.js";\nimport {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { enhanceImageFile } from "./ai-enhancer.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInAnonymously,onAuthStateChanged,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyDGb5F4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
