@@ -32,7 +32,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 .yx-character{width:min(72vw,280px);height:auto;filter:drop-shadow(0 14px 24px #09031399);animation:yxBob 2.8s ease-in-out infinite;overflow:visible}
 @keyframes yxBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 #yxWaveArm{transform-box:fill-box;transform-origin:15% 85%;animation:yxWave 1.05s ease-in-out infinite}
-@keyframes yxWave{0%{transform:rotate(7deg)}25%{transform:rotate(19deg)}50%{transform:rotate(5deg)}75%{transform:rotate(-8deg)}100%{transform:rotate(7deg)}}to{transform:rotate(24deg)}}
+@keyframes yxWave{0%{transform:rotate(7deg)}25%{transform:rotate(19deg)}50%{transform:rotate(5deg)}75%{transform:rotate(-8deg)}100%{transform:rotate(7deg)}}
 #yxBlink{transform-box:fill-box;transform-origin:center;animation:yxBlink 4.2s infinite}
 @keyframes yxBlink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
 .yx-loading{margin:8px auto 0;width:min(78%,280px);height:8px;border-radius:20px;background:#ffffff30;overflow:hidden;border:1px solid #ffffff55}
@@ -56,8 +56,6 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <div id="yuxinOpening" role="status" aria-label="Membuka KYASSASIN HDR">
  <span class="yx-spark s1">✦</span><span class="yx-spark s2">✧</span><span class="yx-spark s3">❀</span><span class="yx-spark s4">✦</span>
  <div class="yx-content">
-  <h1 class="yx-title">KYASSASIN HDR</h1>
-  <p class="yx-subtitle">Hallo Rekan Dao, selamat datang!</p>
   <svg class="yx-character" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg" aria-label="Yuxin chibi melambaikan tangan">
    <defs><linearGradient id="yxHair" x2="1" y2="1"><stop stop-color="#302044"/><stop offset=".55" stop-color="#171326"/><stop offset="1" stop-color="#68468b"/></linearGradient><linearGradient id="yxRobe" x2="1" y2="1"><stop stop-color="#fff1ff"/><stop offset=".55" stop-color="#bda5ef"/><stop offset="1" stop-color="#7654b7"/></linearGradient><linearGradient id="yxSkin" x2="0" y2="1"><stop stop-color="#fff0e9"/><stop offset="1" stop-color="#f3bfc5"/></linearGradient></defs>
    <ellipse cx="150" cy="286" rx="78" ry="13" fill="#100b25" opacity=".35"/>
@@ -73,8 +71,6 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
    <path d="M99 190 Q74 178 66 197" fill="none" stroke="#f2c5c8" stroke-width="17" stroke-linecap="round"/>
    <path d="M132 207 L151 226 L171 207" fill="none" stroke="#f6d995" stroke-width="3"/>
   </svg>
-  <h2 class="yx-title" style="font-size:clamp(20px,5vw,27px);margin-top:-4px">Hallo Rekan Dao!</h2>
-  <p class="yx-subtitle">Apa Sudah Menaikan Kultivasi?</p>
   <div class="yx-loading"><span></span></div>
  </div>
 </div>
@@ -237,7 +233,7 @@ async function startChat(){
    el.append(b,p,small);$("#chatlog").append(el)
   }
   $("#chatlog").scrollTop=$("#chatlog").scrollHeight
- },e=>say("#chatMsg","Chat gagal dimuat: "+friendlyError(e)));
+ },e=>{say("#chatMsg","Chat gagal dimuat: "+friendlyError(e));showConnectionGate("Koneksi ke layanan chat terputus. Sambungkan kembali.");});
  const myPresence=doc(db,"presence",currentUser.uid);
  const publishPresence=()=>setDoc(myPresence,{uid:currentUser.uid,displayName:"Pengguna "+currentUser.uid.slice(-4),online:true,lastSeen:serverTimestamp()},{merge:true});
  await publishPresence();
@@ -257,7 +253,7 @@ async function startChat(){
    $("#onlineUsers").append(tag);
   });
  };
- unsubPresence=onSnapshot(pq,s=>{latestPresence=s.docs.map(d=>d.data());renderOnline()},e=>say("#chatMsg","Daftar online gagal dimuat: "+friendlyError(e)));
+ unsubPresence=onSnapshot(pq,s=>{latestPresence=s.docs.map(d=>d.data());renderOnline()},e=>{say("#chatMsg","Daftar online gagal dimuat: "+friendlyError(e));showConnectionGate("Status online belum dapat disinkronkan. Periksa koneksi dan aturan Firestore.");});
  presenceRenderTimer=setInterval(renderOnline,10000);
 }
 $("#sendChat").onclick=async()=>{
