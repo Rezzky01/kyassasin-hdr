@@ -226,19 +226,44 @@ document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
  if(b.dataset.page==="admin"&&isAdmin)$("#adminMsg").textContent="Mode admin lokal aktif. Hak akses database Firebase tidak berubah.";
 });
 
-function startChat(){
+async function startChat(){
+ if(unsubChat){unsubChat();unsubChat=null}
+ if(unsubPresence){unsubPresence();unsubPresence=null}
+ if(presenceTimer)clearInterval(presenceTimer);
+ if(presenceRenderTimer)clearInterval(presenceRenderTimer);
  const q=query(collection(db,"messages"),orderBy("createdAt","desc"),limit(80));
  unsubChat=onSnapshot(q,s=>{
   let items=s.docs.map(d=>({id:d.id,...d.data()})).reverse();$("#chatlog").innerHTML="";
   for(const m of items){
    let el=document.createElement("div");el.className="bubble"+(m.uid===currentUser.uid?" mine":"");
-   let b=document.createElement("b");b.textContent=m.email||"Pengguna";
+   let b=document.createElement("b");b.textContent=m.displayName||"Pengguna";
    let p=document.createElement("div");p.textContent=m.text||"";
    let small=document.createElement("span");small.className="small";small.textContent=m.createdAt?.toDate?m.createdAt.toDate().toLocaleString("id-ID"):"baru saja";
    el.append(b,p,small);$("#chatlog").append(el)
   }
   $("#chatlog").scrollTop=$("#chatlog").scrollHeight
  },e=>say("#chatMsg","Chat gagal dimuat: "+friendlyError(e)));
+ const myPresence=doc(db,"presence",currentUser.uid);
+ const publishPresence=()=>setDoc(myPresence,{uid:currentUser.uid,displayName:"Pengguna "+currentUser.uid.slice(-4),online:true,lastSeen:serverTimestamp()},{merge:true});
+ await publishPresence();
+ presenceTimer=setInterval(()=>{if(navigator.onLine)publishPresence().catch(e=>console.warn("Heartbeat online gagal:",e))},20000);
+ const pq=query(collection(db,"presence"),orderBy("lastSeen","desc"),limit(100));
+ let latestPresence=[];
+ const renderOnline=()=>{
+  const now=Date.now();
+  const online=latestPresence.filter(p=>p.online&&p.lastSeen?.toMillis&&now-p.lastSeen.toMillis()<65000);
+  $("#onlineCount").textContent=online.length+" online";
+  $("#onlineUsers").innerHTML="";
+  if(!online.length){$("#onlineUsers").textContent="Belum ada pengguna yang online.";return}
+  online.forEach(p=>{
+   const tag=document.createElement("span");tag.className="online-user";
+   const dot=document.createElement("span");dot.className="online-dot";
+   tag.append(dot,document.createTextNode(p.uid===currentUser.uid?"Kamu":(p.displayName||"Pengguna")));
+   $("#onlineUsers").append(tag);
+  });
+ };
+ unsubPresence=onSnapshot(pq,s=>{latestPresence=s.docs.map(d=>d.data());renderOnline()},e=>say("#chatMsg","Daftar online gagal dimuat: "+friendlyError(e)));
+ presenceRenderTimer=setInterval(renderOnline,10000);
 }
 $("#sendChat").onclick=async()=>{
  let text=$("#chatText").value.trim();if(!text)return;
