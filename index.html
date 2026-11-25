@@ -190,18 +190,13 @@ onAuthStateChanged(auth,async u=>{
  if(unsubChat){unsubChat();unsubChat=null}
  if(!u){
   currentUser=null;isAdmin=false;
-  $("#app").classList.remove("hidden");
-  $("#who").textContent="Mode pemulihan";
-  $("#role").textContent="Menyiapkan fitur tanpa login";
-  say("#photoStatus","Fitur recovery siap digunakan. Menghubungkan layanan komunitas...");
+  showConnectionGate("Menghubungkan akun dan layanan real-time. Pastikan internet aktif.");
+  $("#who").textContent="Menghubungkan...";
+  $("#role").textContent="Menunggu koneksi Firebase";
   try{await signInAnonymously(auth)}
   catch(e){
    console.error("Login anonim gagal:",e);
-   $("#app").classList.remove("hidden");
-   $("#who").textContent="Mode offline";
-   $("#role").textContent="Fitur recovery lokal tersedia";
-   say("#photoStatus","Recovery foto/video tetap bisa digunakan. Layanan komunitas belum tersambung: "+friendlyError(e));
-   finishYuxinOpening();
+   showConnectionGate("Belum dapat terhubung ke Firebase: "+friendlyError(e));
   }
   return;
  }
@@ -211,7 +206,7 @@ onAuthStateChanged(auth,async u=>{
   if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:null,phone:null,loginMethod:"anonymous",role:"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
   else await setDoc(userRef,{loginMethod:"anonymous",lastLoginAt:serverTimestamp()},{merge:true});
   const profile=(await getDoc(userRef)).data()||{};
-  if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";say("#photoStatus","Akun ini dibatasi. Fitur recovery lokal tetap tersedia.");finishYuxinOpening();return}
+  if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";showConnectionGate("Akun ini dibatasi. Hubungi administrator.");return}
   $("#app").classList.remove("hidden");$("#who").textContent="Pengguna";$("#role").textContent="Masuk otomatis • Akun anonim";
   $("#adminNav").classList.add("hidden");say("#vipState","Status: pengguna reguler. Hubungi admin untuk informasi VIP.");
   await startChat();
@@ -267,7 +262,7 @@ async function startChat(){
 }
 $("#sendChat").onclick=async()=>{
  let text=$("#chatText").value.trim();if(!text)return;
- try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:null,text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}
+ try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:null,displayName:"Pengguna "+currentUser.uid.slice(-4),text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}
  catch(e){say("#chatMsg","Tidak dapat mengirim: "+friendlyError(e))}
 };
 
