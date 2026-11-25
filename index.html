@@ -26,7 +26,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
  <section id="page-home" class="page">
   <div class="card">
    <h2>Penjernihan Foto & Video Otomatis</h2>
-   <p class="muted">Pilih gaya penjernihan dan file, lalu tekan tombol Jernihkan. Hasilnya siap dibagikan ke WhatsApp Status.</p>
+   <p class="muted">Pulihkan foto dengan AI Ultra HD 4× langsung di perangkat. Model AI gratis diunduh sekali, lalu tersimpan di HP.</p>
    <div class="mode-grid">
     <label class="mode-card"><input type="radio" name="recoveryMode" value="wink" checked><span><b>Wink Style</b><small>Warna lebih hidup, cahaya hangat, tampilan lembut untuk selfie dan wajah.</small></span></label>
     <label class="mode-card"><input type="radio" name="recoveryMode" value="natural"><span><b>Natural HD</b><small>Kontras dan detail ringan dengan hasil yang lebih natural.</small></span></label>
@@ -38,7 +38,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
    <progress id="videoProgress" value="0" max="100"></progress>
    <p class="muted" id="photoStatus">Menunggu foto atau video dipilih.</p>
    <button id="recoverBtn" disabled>Jernihkan Foto / Video</button><button id="shareBtn" class="hidden" disabled>Bagikan ke WhatsApp Status</button>
-   <p class="muted">Pilih file, tekan Jernihkan Foto atau Jernihkan Video, tunggu sampai proses selesai, lalu bagikan hasilnya ke WhatsApp Status. Pengiriman Status tetap perlu konfirmasi di WhatsApp.</p>
+   <p class="muted">AI Ultra HD saat ini untuk foto. Video masih memakai pemrosesan filter biasa; AI video akan dibuat pada tahap berikutnya. Pengiriman Status tetap perlu konfirmasi di WhatsApp.</p>
   </div>
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna aplikasi. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
@@ -49,7 +49,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module" src="./share-bridge.js"></script>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { enhanceImageFile } from "./ai-enhancer.js";\nimport {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInAnonymously,onAuthStateChanged,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyDGb5F4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
@@ -205,20 +205,18 @@ $("#videoFile").onchange=e=>{
  resetResult();$("#photoFile").value="";selectedFile=file;selectedKind="video";
  if(videoSourceUrl)URL.revokeObjectURL(videoSourceUrl);
  videoSourceUrl=URL.createObjectURL(file);$("#videoPreview").src=videoSourceUrl;$("#videoPreview").controls=true;$("#videoPreview").style.display="block";
- $("#recoverBtn").disabled=false;$("#recoverBtn").textContent="Jernihkan Video";
- $("#photoStatus").textContent="Video dipilih: "+file.name+". Tekan Jernihkan Video untuk memulai.";
+ $("#recoverBtn").disabled=false;$("#recoverBtn").textContent="Proses Video (filter)";
+ $("#photoStatus").textContent="Video dipilih: "+file.name+". Catatan: AI Ultra HD belum aktif untuk video; proses video masih memakai filter biasa.";
 };
 async function processPhoto(file){
- const mode=currentRecoveryMode(),sourceUrl=URL.createObjectURL(file),img=new Image();
- try{
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("Foto tidak dapat dibaca. Coba file lain."));img.src=sourceUrl});
-  const scale=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
-  canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
-  paintFrame(img,canvas.width,canvas.height,mode);sharpenNatural();
-  enhancedFile=await makePhotoFile();if(!enhancedFile)throw new Error("Tidak dapat membuat file hasil");
-  $("#canvas").style.display="block";
-  $("#photoStatus").textContent="Foto berhasil dijernihkan ("+(mode==="wink"?"Wink Style":"Natural HD")+"). Hasil siap dibagikan.";
- }finally{URL.revokeObjectURL(sourceUrl)}
+ enhancedFile=await enhanceImageFile(file,message=>{ $("#photoStatus").textContent=message; });
+ if(!enhancedFile)throw new Error("Tidak dapat membuat file hasil AI.");
+ const bitmap=await createImageBitmap(enhancedFile);
+ canvas.width=bitmap.width;canvas.height=bitmap.height;
+ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0);
+ bitmap.close?.();
+ $("#canvas").style.display="block";
+ $("#photoStatus").textContent="AI Ultra HD selesai: foto ditingkatkan hingga 4×. Model tersimpan di perangkat; hasil siap dibagikan.";
 }
 $("#recoverBtn").onclick=async()=>{
  if(!selectedFile||activeProcessing)return;
