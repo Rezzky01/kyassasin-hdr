@@ -103,9 +103,11 @@ export async function enhanceImageFile(file, onProgress = () => {}) {
   const session = await getSession(onProgress);
   onProgress("Membaca foto...");
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 768 / Math.max(bitmap.width, bitmap.height));
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
+  // Keep the original input dimensions; no 768px downscale.
+  const width = bitmap.width;
+  const height = bitmap.height;
+  if (!width || !height) { bitmap.close?.(); throw new Error("Resolusi foto tidak valid."); }
+  if (width * height * 16 > 1_500_000_000) { bitmap.close?.(); throw new Error("Foto terlalu besar untuk memori perangkat pada keluaran AI 4×. Coba foto dengan resolusi lebih rendah."); }
   const inputCanvas = document.createElement("canvas");
   inputCanvas.width = width;
   inputCanvas.height = height;
