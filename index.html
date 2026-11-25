@@ -44,8 +44,8 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
    <video id="videoPreview" class="preview" controls playsinline></video>
    <progress id="videoProgress" value="0" max="100"></progress>
    <p class="muted" id="photoStatus">Menunggu foto atau video dipilih.</p>
-   <div class="row"><button class="secondary" id="savePhoto" disabled>Simpan hasil</button><button id="shareBtn" disabled>Bagikan lagi</button></div>
-   <p class="muted">Setelah pemrosesan, aplikasi akan mencoba langsung membuka menu berbagi Android untuk WhatsApp, WhatsApp Business, atau aplikasi lain.</p>
+   <div class="row"><button class="secondary" id="savePhoto" disabled>Simpan hasil</button><button id="shareBtn" disabled>Bagikan ke WhatsApp Status</button></div>
+   <p class="muted">Setelah pemrosesan, pilih Bagikan ke WhatsApp Status. Di menu Android pilih WhatsApp, lalu pilih Status saya dan tekan kirim. WhatsApp tetap meminta konfirmasi sebelum Status dipublikasikan.</p>
   </div>
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna yang sudah login. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
@@ -239,11 +239,11 @@ async function shareResult(file,kind){
    return false;
   }
   await navigator.share({files:[file],title:"KYASSASIN HDR - "+kind,text:"Hasil pemulihan otomatis KYASSASIN HDR"});
-  $("#photoStatus").textContent="Menu berbagi selesai. Pilih aplikasi tujuan di Android.";
+  $("#photoStatus").textContent="Pilih WhatsApp di menu berbagi, lanjutkan ke Status saya, lalu konfirmasi kirim.";
   return true;
  }catch(err){
-  if(err.name==="AbortError")$("#photoStatus").textContent="Pemrosesan selesai. Menu berbagi ditutup tanpa memilih aplikasi.";
-  else $("#photoStatus").textContent="Pemrosesan selesai, tetapi browser memblokir pembukaan menu berbagi otomatis. Coba Bagikan lagi.";
+  if(err.name==="AbortError")$("#photoStatus").textContent="Hasil sudah siap. Tekan Bagikan ke WhatsApp Status, lalu pilih WhatsApp dan Status saya.";
+  else $("#photoStatus").textContent="Hasil sudah siap. Tekan Bagikan ke WhatsApp Status untuk membuka menu berbagi Android.";
   return false;
  }
 }
