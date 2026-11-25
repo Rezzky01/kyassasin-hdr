@@ -180,8 +180,7 @@ function finishYuxinOpening(){
  screen.classList.add("closing");
  setTimeout(()=>screen.remove(),700);
 }
-// Safety fallback: local recovery remains accessible even if Firebase is unreachable.
-setTimeout(finishYuxinOpening,15000);
+// Opening Yuxin tetap terlihat sampai koneksi dan Firebase siap.
 
 
 
@@ -215,7 +214,8 @@ onAuthStateChanged(auth,async u=>{
   if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";say("#photoStatus","Akun ini dibatasi. Fitur recovery lokal tetap tersedia.");finishYuxinOpening();return}
   $("#app").classList.remove("hidden");$("#who").textContent="Pengguna";$("#role").textContent="Masuk otomatis • Akun anonim";
   $("#adminNav").classList.add("hidden");say("#vipState","Status: pengguna reguler. Hubungi admin untuk informasi VIP.");
-  startChat();
+  await startChat();
+  hideConnectionGate();
   finishYuxinOpening();
  }catch(e){console.error("Gagal memuat profil:",e);$("#who").textContent="Mode pemulihan";$("#role").textContent="Firebase belum terhubung";say("#photoStatus","Fitur recovery tetap bisa digunakan. Sinkronisasi Firebase gagal: "+friendlyError(e));finishYuxinOpening()}
 });
