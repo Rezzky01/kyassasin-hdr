@@ -24,10 +24,10 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
-          cp node_modules/onnxruntime-web/dist/*.wasm www/
-          cp node_modules/onnxruntime-web/dist/*.mjs www/
       - name: Install Capacitor
         run: npm install
+      - name: Copy ONNX Runtime assets
+        run: cp node_modules/onnxruntime-web/dist/*.wasm node_modules/onnxruntime-web/dist/*.mjs www/
       - name: Bundle local AI enhancer
         run: npx esbuild ai-enhancer.js --bundle --format=esm --outfile=www/ai-enhancer.js
       - name: Bundle native share bridge
