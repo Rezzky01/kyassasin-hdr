@@ -27,10 +27,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
   <div class="card">
    <h2>Penjernihan Foto & Video Otomatis</h2>
    <p class="muted">Pulihkan foto dengan AI Ultra HD 4× langsung di perangkat. Model AI gratis diunduh sekali, lalu tersimpan di HP.</p>
-   <div class="mode-grid">
-    <label class="mode-card"><input type="radio" name="recoveryMode" value="wink" checked><span><b>Wink Style</b><small>Warna lebih hidup, cahaya hangat, tampilan lembut untuk selfie dan wajah.</small></span></label>
-    <label class="mode-card"><input type="radio" name="recoveryMode" value="natural"><span><b>Natural HD</b><small>Kontras dan detail ringan dengan hasil yang lebih natural.</small></span></label>
-   </div>
+   <div class="mode-grid"><div class="mode-card"><span><b>AI Ultra HD • Real-ESRGAN 4×</b><small>AI memulihkan detail dan memperbesar resolusi foto. Pemrosesan berjalan di HP, tanpa API berbayar.</small></span></div></div>
    <label class="file-label" for="photoFile">Pilih Foto</label><input type="file" id="photoFile" accept="image/*">
    <label class="file-label" for="videoFile">Pilih Video</label><input type="file" id="videoFile" accept="video/*">
    <img id="imagePreview" class="preview" alt="Foto yang dipilih" style="display:none"><canvas id="canvas" class="preview" style="display:none"></canvas>
