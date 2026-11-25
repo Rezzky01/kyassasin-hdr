@@ -31,8 +31,8 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 .yx-subtitle{color:#fff1ff;font-weight:700;font-size:15px;text-shadow:0 2px 7px #160b35;margin:0 0 8px}
 .yx-character{width:min(72vw,280px);height:auto;filter:drop-shadow(0 14px 24px #09031399);animation:yxBob 2.8s ease-in-out infinite;overflow:visible}
 @keyframes yxBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-#yxWaveArm{transform-box:fill-box;transform-origin:15% 85%;animation:yxWave .72s ease-in-out infinite alternate}
-@keyframes yxWave{from{transform:rotate(-18deg)}to{transform:rotate(24deg)}}
+#yxWaveArm{transform-box:fill-box;transform-origin:15% 85%;animation:yxWave 1.05s ease-in-out infinite}
+@keyframes yxWave{0%{transform:rotate(7deg)}25%{transform:rotate(19deg)}50%{transform:rotate(5deg)}75%{transform:rotate(-8deg)}100%{transform:rotate(7deg)}}to{transform:rotate(24deg)}}
 #yxBlink{transform-box:fill-box;transform-origin:center;animation:yxBlink 4.2s infinite}
 @keyframes yxBlink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
 .yx-loading{margin:8px auto 0;width:min(78%,280px);height:8px;border-radius:20px;background:#ffffff30;overflow:hidden;border:1px solid #ffffff55}
@@ -64,7 +64,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
   </svg>
   <h2 class="yx-title" style="font-size:clamp(20px,5vw,27px);margin-top:-4px">Hallo Rekan Dao!</h2>
   <p class="yx-subtitle">Apa Sudah Menaikan Kultivasi?</p>
-  <div class="yx-loading"><span></span></div><div class="yx-loading-text">Menyiapkan aplikasi...</div>
+  <div class="yx-loading"><span></span></div>
  </div>
 </div>
 <div class="wrap">
