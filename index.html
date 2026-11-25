@@ -21,9 +21,11 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <body><div class="wrap">
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
 <section id="auth" class="card">
- <div class="tabs"><button id="showLogin">Login</button></div>
+ <div class="tabs"><button id="showLogin">Login</button><button id="showRegister" class="secondary">Daftar email</button><button id="showPhone" class="secondary">Daftar nomor</button></div>
  <div id="loginBox"><h2>Masuk akun</h2><input id="loginEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="loginBtn">Login</button><button id="resetBtn" class="secondary">Lupa password? Kirim link reset</button></div>
- <div id="authMsg" class="status">Login administrator. Pendaftaran akun baru dinonaktifkan. Jika lupa password, gunakan tombol reset password.</div>
+ <div id="registerBox" class="hidden"><h2>Daftar dengan email</h2><input id="regEmail" type="email" placeholder="Alamat email"><input id="regPass" type="password" minlength="6" placeholder="Password (minimal 6 karakter)"><button id="registerBtn">Buat akun</button><p class="small">Kami akan mengirim link verifikasi ke email kamu.</p></div>
+ <div id="phoneBox" class="hidden"><h2>Daftar dengan nomor telepon</h2><input id="phoneNumber" type="tel" placeholder="+628xxxxxxxxxx"><div id="recaptcha-container"></div><button id="sendOtpBtn">Kirim kode OTP</button><input id="otpCode" class="hidden" inputmode="numeric" autocomplete="one-time-code" placeholder="Masukkan kode OTP"><button id="verifyOtpBtn" class="hidden">Verifikasi & masuk</button><p class="small">Gunakan format internasional, contoh +6281234567890. Akun nomor telepon memakai verifikasi OTP; password terpisah belum didukung oleh Firebase Phone Auth.</p></div>
+ <div id="authMsg" class="status">Pilih login atau buat akun baru menggunakan email/password maupun nomor telepon/OTP.</div>
 </section>
 <section id="app" class="hidden">
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
@@ -54,7 +56,7 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload,setPersistence,browserLocalPersistence,RecaptchaVerifier,signInWithPhoneNumber} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyDQ9TD4fl8zWGo1V7m5jAGoWci-eFrXRwc",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:5163d76374bf1f24670011",measurementId:"G-LWMPJ5VBX7"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
@@ -87,6 +89,43 @@ $("#loginBtn").onclick=async()=>{
  try{await signInWithEmailAndPassword(auth,$("#loginEmail").value.trim(),$("#loginPass").value)}
  catch(e){say("#authMsg","Gagal login: "+friendlyError(e))}
 };
+function showAuth(which){
+ $("#loginBox").classList.toggle("hidden",which!=="login");
+ $("#registerBox").classList.toggle("hidden",which!=="register");
+ $("#phoneBox").classList.toggle("hidden",which!=="phone");
+}
+$("#showLogin").onclick=()=>showAuth("login");
+$("#showRegister").onclick=()=>showAuth("register");
+$("#showPhone").onclick=()=>showAuth("phone");
+$("#registerBtn").onclick=async()=>{
+ const email=$("#regEmail").value.trim(),password=$("#regPass").value;
+ if(!email||password.length<6){say("#authMsg","Isi email yang valid dan password minimal 6 karakter.");return}
+ try{
+  const cred=await createUserWithEmailAndPassword(auth,email,password);
+  await sendEmailVerification(cred.user);
+  await signOut(auth);
+  showAuth("login");
+  say("#authMsg","Akun berhasil dibuat. Buka email untuk verifikasi, lalu login.");
+ }catch(e){say("#authMsg","Pendaftaran gagal: "+friendlyError(e))}
+};
+let phoneConfirmation=null,phoneRecaptcha=null;
+$("#sendOtpBtn").onclick=async()=>{
+ const phone=$("#phoneNumber").value.trim();
+ if(!/^\+[1-9]\d{7,14}$/.test(phone)){say("#authMsg","Nomor harus memakai format internasional, misalnya +6281234567890.");return}
+ try{
+  if(!phoneRecaptcha)phoneRecaptcha=new RecaptchaVerifier(auth,"recaptcha-container",{size:"normal"});
+  phoneConfirmation=await signInWithPhoneNumber(auth,phone,phoneRecaptcha);
+  $("#otpCode").classList.remove("hidden");$("#verifyOtpBtn").classList.remove("hidden");
+  say("#authMsg","Kode OTP sudah dikirim melalui SMS. Masukkan kode yang diterima.");
+ }catch(e){if(phoneRecaptcha){try{await phoneRecaptcha.clear()}catch{} phoneRecaptcha=null}say("#authMsg","Gagal mengirim OTP: "+friendlyError(e))}
+};
+$("#verifyOtpBtn").onclick=async()=>{
+ const code=$("#otpCode").value.trim();
+ if(!phoneConfirmation||!/^\d{6}$/.test(code)){say("#authMsg","Masukkan kode OTP 6 digit yang valid.");return}
+ try{await phoneConfirmation.confirm(code);say("#authMsg","Nomor berhasil diverifikasi. Akun sedang disiapkan...")}
+ catch(e){say("#authMsg","Verifikasi gagal: "+friendlyError(e))}
+};
+
 $("#logout").onclick=()=>signOut(auth);
 
 onAuthStateChanged(auth,async u=>{
@@ -99,7 +138,8 @@ onAuthStateChanged(auth,async u=>{
    await signOut(auth);say("#authMsg","Email belum diverifikasi. Buka link verifikasi di email, lalu login kembali.");return
   }
   const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
-  if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:u.email,role:isAdmin?"admin":"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
+  if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:u.email||null,phone:u.phoneNumber||null,loginMethod:u.phoneNumber?"phone":"email",role:isAdmin?"admin":"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
+  else await setDoc(userRef,{email:u.email||null,phone:u.phoneNumber||null,loginMethod:u.phoneNumber?"phone":"email",lastLoginAt:serverTimestamp()},{merge:true});
   const profile=(await getDoc(userRef)).data()||{};
   if(profile.blocked&&!isAdmin){await signOut(auth);say("#authMsg","Akun ini diblokir. Hubungi admin.");return}
   $("#auth").classList.add("hidden");$("#app").classList.remove("hidden");$("#who").textContent=u.email||"Pengguna";$("#role").textContent=isAdmin?"Administrator":(profile.vip?"Pengguna VIP":"Pengguna terverifikasi");
