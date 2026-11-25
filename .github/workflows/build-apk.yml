@@ -25,6 +25,8 @@ jobs:
           cp index.html www/index.html
       - name: Install Capacitor
         run: npm install
+      - name: Bundle native share bridge
+        run: npx esbuild share-bridge.js --bundle --format=esm --outfile=www/share-bridge.js
       - name: Generate Android project
         run: npx cap add android
       - name: Sync Android
