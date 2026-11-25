@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "index.html"
+      - "ai-enhancer.js"
       - "package.json"
       - "capacitor.config.json"
       - ".github/workflows/build-apk.yml"
@@ -23,8 +24,12 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
+          cp node_modules/onnxruntime-web/dist/*.wasm www/
+          cp node_modules/onnxruntime-web/dist/*.mjs www/
       - name: Install Capacitor
         run: npm install
+      - name: Bundle local AI enhancer
+        run: npx esbuild ai-enhancer.js --bundle --format=esm --outfile=www/ai-enhancer.js
       - name: Bundle native share bridge
         run: npx esbuild share-bridge.js --bundle --format=esm --outfile=www/share-bridge.js
       - name: Generate Android project
