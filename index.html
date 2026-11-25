@@ -17,8 +17,57 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 .topline{display:flex;justify-content:space-between;align-items:center;gap:10px}.topline button{width:auto}.preview{width:100%;max-height:340px;object-fit:contain;background:#08080c;border-radius:12px;margin-top:8px}
 .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 14px}.mode-card{display:flex;gap:9px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);cursor:pointer}.mode-card input{width:auto;margin:3px 0;accent-color:var(--accent)}.mode-card span{display:grid;gap:5px}.mode-card small{font-size:12px;color:var(--muted);line-height:1.4}.file-label{display:block;font-weight:700;margin-top:12px}.file-label+input{margin-top:4px}progress{width:100%;height:10px;accent-color:var(--accent);margin-top:8px}@media(max-width:560px){.mode-grid{grid-template-columns:1fr}}.chatlog{height:300px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}.bubble{padding:9px 11px;background:var(--panel2);border-radius:12px;margin:7px 0;max-width:90%;overflow-wrap:anywhere}.bubble.mine{margin-left:auto;border:1px solid var(--accent)}.bubble .small{display:block;margin-top:4px}.userrow{padding:10px 0;border-bottom:1px solid var(--line)}.badge{font-size:11px;padding:3px 7px;border-radius:20px;background:var(--panel2);color:var(--accent)}
 @media(max-width:560px){.row{flex-wrap:wrap}.row>*{min-width:100%}.topline{align-items:flex-start}}
+
+/* Yuxin welcome screen: the wave stays in motion until app startup completes. */
+#yuxinOpening{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 34%,#55408f 0,#21153f 48%,#090713 100%);transition:opacity .65s ease,visibility .65s ease}
+#yuxinOpening.closing{opacity:0;visibility:hidden;pointer-events:none}
+#yuxinOpening:before,#yuxinOpening:after{content:"";position:absolute;inset:auto -15% 0;height:34%;background:linear-gradient(180deg,#a58de855,#20153f 70%);clip-path:polygon(0 35%,12% 20%,22% 42%,35% 12%,48% 38%,62% 8%,75% 35%,88% 10%,100% 30%,100% 100%,0 100%);opacity:.75}
+#yuxinOpening:after{height:22%;opacity:.45;transform:scaleX(-1);filter:blur(9px)}
+.yx-spark{position:absolute;color:#ffe6a6;text-shadow:0 0 15px #f8c9ff;animation:yxFloat 4s ease-in-out infinite}
+.yx-spark.s1{left:12%;top:18%;font-size:24px}.yx-spark.s2{right:13%;top:25%;font-size:19px;animation-delay:1s}.yx-spark.s3{left:20%;bottom:22%;font-size:17px;animation-delay:2s}.yx-spark.s4{right:19%;bottom:28%;font-size:25px;animation-delay:.6s}
+@keyframes yxFloat{0%,100%{transform:translateY(0) rotate(0);opacity:.45}50%{transform:translateY(-20px) rotate(18deg);opacity:1}}
+.yx-content{position:relative;z-index:2;width:min(92vw,430px);text-align:center;padding:20px 16px 28px}
+.yx-title{font-weight:900;font-size:clamp(25px,7vw,36px);color:#ffe6a3;text-shadow:0 3px 0 #5b327e,0 0 20px #f5c5ff;margin:0 0 4px}
+.yx-subtitle{color:#fff1ff;font-weight:700;font-size:15px;text-shadow:0 2px 7px #160b35;margin:0 0 8px}
+.yx-character{width:min(72vw,280px);height:auto;filter:drop-shadow(0 14px 24px #09031399);animation:yxBob 2.8s ease-in-out infinite;overflow:visible}
+@keyframes yxBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+#yxWaveArm{transform-box:fill-box;transform-origin:15% 85%;animation:yxWave .72s ease-in-out infinite alternate}
+@keyframes yxWave{from{transform:rotate(-18deg)}to{transform:rotate(24deg)}}
+#yxBlink{transform-box:fill-box;transform-origin:center;animation:yxBlink 4.2s infinite}
+@keyframes yxBlink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
+.yx-loading{margin:8px auto 0;width:min(78%,280px);height:8px;border-radius:20px;background:#ffffff30;overflow:hidden;border:1px solid #ffffff55}
+.yx-loading span{display:block;width:38%;height:100%;border-radius:20px;background:linear-gradient(90deg,#b7e9ff,#fff0a9,#d6a8ff);box-shadow:0 0 15px #e6c4ff;animation:yxLoad 1.5s ease-in-out infinite}
+@keyframes yxLoad{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.yx-loading-text{color:#eee1ff;font-size:12px;margin-top:9px;letter-spacing:1px}
+@media(prefers-reduced-motion:reduce){#yxWaveArm,#yxBlink,.yx-character,.yx-spark,.yx-loading span{animation-duration:3s}}
 </style></head>
-<body><div class="wrap">
+<body>
+<div id="yuxinOpening" role="status" aria-label="Membuka KYASSASIN HDR">
+ <span class="yx-spark s1">✦</span><span class="yx-spark s2">✧</span><span class="yx-spark s3">❀</span><span class="yx-spark s4">✦</span>
+ <div class="yx-content">
+  <h1 class="yx-title">KYASSASIN HDR</h1>
+  <p class="yx-subtitle">Hallo Rekan Dao, selamat datang!</p>
+  <svg class="yx-character" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg" aria-label="Yuxin chibi melambaikan tangan">
+   <defs><linearGradient id="yxHair" x2="1" y2="1"><stop stop-color="#302044"/><stop offset=".55" stop-color="#171326"/><stop offset="1" stop-color="#68468b"/></linearGradient><linearGradient id="yxRobe" x2="1" y2="1"><stop stop-color="#fff1ff"/><stop offset=".55" stop-color="#bda5ef"/><stop offset="1" stop-color="#7654b7"/></linearGradient><linearGradient id="yxSkin" x2="0" y2="1"><stop stop-color="#fff0e9"/><stop offset="1" stop-color="#f3bfc5"/></linearGradient></defs>
+   <ellipse cx="150" cy="286" rx="78" ry="13" fill="#100b25" opacity=".35"/>
+   <!-- long hair behind the body --> <path d="M82 111 Q43 165 62 252 Q69 286 104 270 L112 180 Q184 296 226 263 Q248 240 218 139Z" fill="url(#yxHair)" stroke="#b79be5" stroke-width="3"/>
+   <!-- robe and body --> <path d="M105 177 Q150 151 194 177 L225 275 Q150 299 75 275Z" fill="url(#yxRobe)" stroke="#f8dca8" stroke-width="3"/><path d="M132 177 L151 216 L171 177" fill="none" stroke="#8a62c2" stroke-width="7"/><path d="M94 226 Q150 246 207 226" fill="none" stroke="#f8dca8" stroke-width="3"/>
+   <!-- neck and face --> <path d="M132 145 L132 177 Q150 193 170 176 L168 145" fill="url(#yxSkin)"/><ellipse cx="151" cy="105" rx="72" ry="82" fill="url(#yxSkin)" stroke="#e8b5c7" stroke-width="2"/>
+   <!-- hair cap and bangs --> <path d="M79 111 Q65 30 145 22 Q224 17 226 100 Q203 71 183 69 Q157 95 117 80 Q103 103 79 111Z" fill="url(#yxHair)"/><path d="M86 86 Q108 34 145 37 Q117 66 126 105 Q104 89 86 119Z" fill="#2b1d3d"/><path d="M144 35 Q185 31 211 78 Q184 65 165 94 Q157 67 144 35Z" fill="#21172f"/>
+   <!-- ears --> <ellipse cx="81" cy="116" rx="12" ry="19" fill="#f4c6ca"/><ellipse cx="220" cy="116" rx="12" ry="19" fill="#f4c6ca"/>
+   <!-- eyes --> <g id="yxBlink"><ellipse cx="122" cy="116" rx="11" ry="15" fill="#4b326c"/><ellipse cx="181" cy="116" rx="11" ry="15" fill="#4b326c"/><ellipse cx="125" cy="111" rx="4" ry="6" fill="white"/><ellipse cx="184" cy="111" rx="4" ry="6" fill="white"/></g>
+   <path d="M145 151 Q153 159 164 150" fill="none" stroke="#b85f7a" stroke-width="3" stroke-linecap="round"/><path d="M96 139 Q108 146 118 139 M187 139 Q198 146 207 139" fill="none" stroke="#e99aa9" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+   <!-- hair flower --> <g transform="translate(202 62)"><circle r="8" fill="#ffe7a8"/><g fill="#c9a6ff"><ellipse cy="-13" rx="7" ry="12"/><ellipse cy="13" rx="7" ry="12"/><ellipse cx="-13" rx="12" ry="7"/><ellipse cx="13" rx="12" ry="7"/></g><circle r="5" fill="#ffe8a5"/></g>
+   <!-- waving arm on top --> <g id="yxWaveArm"><path d="M196 197 Q224 181 236 151" fill="none" stroke="#f2c5c8" stroke-width="19" stroke-linecap="round"/><path d="M236 151 Q224 126 230 105 Q234 95 241 104 L246 126 L250 91 Q254 81 261 92 L260 125 L269 99 Q278 91 280 105 L272 139 Q266 160 246 169Z" fill="url(#yxSkin)" stroke="#e8b5c7" stroke-width="2" stroke-linejoin="round"/></g>
+   <path d="M99 190 Q74 178 66 197" fill="none" stroke="#f2c5c8" stroke-width="17" stroke-linecap="round"/>
+   <path d="M132 207 L151 226 L171 207" fill="none" stroke="#f6d995" stroke-width="3"/>
+  </svg>
+  <h2 class="yx-title" style="font-size:clamp(20px,5vw,27px);margin-top:-4px">Hallo Rekan Dao!</h2>
+  <p class="yx-subtitle">Apa Sudah Menaikan Kultivasi?</p>
+  <div class="yx-loading"><span></span></div><div class="yx-loading-text">Menyiapkan aplikasi...</div>
+ </div>
+</div>
+<div class="wrap">
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
 <section id="app">
  <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><span class="badge">Mode gratis</span></div>
@@ -73,6 +122,15 @@ const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
 await setPersistence(auth,browserLocalPersistence).catch(e=>console.warn("Persistence tidak tersedia:",e));
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
 const say=(id,t)=>$(id).textContent=t;
+function finishYuxinOpening(){
+ const screen=document.getElementById("yuxinOpening");
+ if(!screen||screen.classList.contains("closing"))return;
+ screen.classList.add("closing");
+ setTimeout(()=>screen.remove(),700);
+}
+// Safety fallback: local recovery remains accessible even if Firebase is unreachable.
+setTimeout(finishYuxinOpening,15000);
+
 
 
 // Tidak ada tombol keluar: sesi anonim dipertahankan otomatis di perangkat.
@@ -92,6 +150,7 @@ onAuthStateChanged(auth,async u=>{
    $("#who").textContent="Mode offline";
    $("#role").textContent="Fitur recovery lokal tersedia";
    say("#photoStatus","Recovery foto/video tetap bisa digunakan. Layanan komunitas belum tersambung: "+friendlyError(e));
+   finishYuxinOpening();
   }
   return;
  }
@@ -101,11 +160,12 @@ onAuthStateChanged(auth,async u=>{
   if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:null,phone:null,loginMethod:"anonymous",role:"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
   else await setDoc(userRef,{loginMethod:"anonymous",lastLoginAt:serverTimestamp()},{merge:true});
   const profile=(await getDoc(userRef)).data()||{};
-  if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";say("#photoStatus","Akun ini dibatasi. Fitur recovery lokal tetap tersedia.");return}
+  if(profile.blocked){$("#who").textContent="Akun dibatasi";$("#role").textContent="Hubungi admin";say("#photoStatus","Akun ini dibatasi. Fitur recovery lokal tetap tersedia.");finishYuxinOpening();return}
   $("#app").classList.remove("hidden");$("#who").textContent="Pengguna";$("#role").textContent="Masuk otomatis • Akun anonim";
   $("#adminNav").classList.add("hidden");say("#vipState","Status: pengguna reguler. Hubungi admin untuk informasi VIP.");
   startChat();
- }catch(e){console.error("Gagal memuat profil:",e);$("#who").textContent="Mode pemulihan";$("#role").textContent="Firebase belum terhubung";say("#photoStatus","Fitur recovery tetap bisa digunakan. Sinkronisasi Firebase gagal: "+friendlyError(e))}
+  finishYuxinOpening();
+ }catch(e){console.error("Gagal memuat profil:",e);$("#who").textContent="Mode pemulihan";$("#role").textContent="Firebase belum terhubung";say("#photoStatus","Fitur recovery tetap bisa digunakan. Sinkronisasi Firebase gagal: "+friendlyError(e));finishYuxinOpening()}
 });
 
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
