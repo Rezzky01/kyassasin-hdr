@@ -9,7 +9,7 @@
 [data-theme="red"]{--accent:#ff405b}
 [data-theme="purple"]{--accent:#9b5cff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#24163c 0,var(--bg) 48%);color:var(--text);font:15px system-ui,Arial,sans-serif;min-height:100vh}
-.wrap{max-width:980px;margin:auto;padding:18px 14px 50px}.brand{text-align:center;padding:16px 0}.brand h1{font-size:28px;letter-spacing:3px;margin:0}.brand p{color:var(--accent);margin:8px 0}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px;margin:13px 0;box-shadow:0 10px 28px #0002}
+.wrap{max-width:980px;margin:auto;padding:18px 14px 50px}.brand{text-align:center;padding:16px 0}.brand h1{font-size:28px;letter-spacing:3px;margin:0}.brand p{color:var(--accent);margin:8px 0;animation:brandPulse 2.4s ease-in-out infinite}@keyframes brandPulse{0%,100%{opacity:.12;transform:translateY(3px)}50%{opacity:1;transform:translateY(0)}}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px;margin:13px 0;box-shadow:0 10px 28px #0002}
 h2{font-size:19px;margin:0 0 13px}h3{font-size:15px;margin:10px 0}input,select,button,textarea{font:inherit;border-radius:10px;padding:11px;width:100%;margin:5px 0;border:1px solid var(--line);background:var(--bg);color:var(--text)}
 button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-weight:700;cursor:pointer;color:white}button.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}button.danger{background:#a52b3b;color:white}
 .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.muted,.small{color:var(--muted);font-size:13px}.hidden{display:none!important}.status{padding:10px;border-radius:10px;background:var(--panel2);margin:10px 0;white-space:pre-wrap}
@@ -134,7 +134,7 @@ onAuthStateChanged(auth,async u=>{
  currentUser=u;isAdmin=u.uid===ADMIN_UID;
  try{
   await reload(u);
-  if(!isAdmin&&!u.emailVerified){
+  if(!isAdmin&&u.email&&!u.emailVerified){
    await signOut(auth);say("#authMsg","Email belum diverifikasi. Buka link verifikasi di email, lalu login kembali.");return
   }
   const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
@@ -179,7 +179,7 @@ async function loadUsers(){
   say("#adminMsg","Memuat pengguna...");let s=await getDocs(query(collection(db,"users"),limit(100)));$("#usersList").innerHTML="";
   for(let d of s.docs){
    let u=d.data(),row=document.createElement("div");row.className="userrow";
-   let title=document.createElement("b");title.textContent=u.email||u.uid;
+   let title=document.createElement("b");title.textContent=u.email||u.phone||u.uid;
    let info=document.createElement("div");info.className="small";info.textContent=(u.vip?"VIP":"Reguler")+" • "+(u.blocked?"Diblokir":"Aktif")+" • "+u.uid;
    let vip=document.createElement("button");vip.className="secondary";vip.textContent=u.vip?"Cabut VIP":"Berikan VIP";vip.onclick=()=>changeUser(d.id,{vip:!u.vip});
    let block=document.createElement("button");block.className="danger";block.textContent=u.blocked?"Buka blokir":"Blokir";block.onclick=()=>changeUser(d.id,{blocked:!u.blocked});
