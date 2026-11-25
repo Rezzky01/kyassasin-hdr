@@ -39,7 +39,23 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
   </div>
  </section>
  <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna aplikasi. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
- <section id="page-vip" class="page hidden"><div class="card"><h2>Keanggotaan VIP</h2><p id="vipState">Memuat status VIP...</p><p class="muted">Mau VIP? Hubungi admin 6285352860012</p></div></section>
+ <section id="page-vip" class="page hidden">
+  <div class="card">
+   <h2>Keanggotaan VIP</h2>
+   <p id="vipState">Memuat status VIP...</p>
+   <p class="muted">Pilih paket sesuai kebutuhan. Semua pembayaran hanya melalui QRIS All Payment — dapat dibayar memakai aplikasi bank atau e-wallet yang mendukung QRIS.</p>
+   <div class="card">
+    <h3>VIP Mingguan</h3><b>Rp3.000</b><p class="muted">5 kali pemrosesan per hari • berlaku 7 hari</p>
+   </div>
+   <div class="card">
+    <h3>VIP Bulanan</h3><b>Rp7.000</b><p class="muted">10 kali pemrosesan per hari • berlaku 1 bulan</p>
+   </div>
+   <div class="card">
+    <h3>VIP Tahunan</h3><b>Rp15.000</b><p class="muted">Pemrosesan tanpa batas • berlaku 1 tahun</p>
+   </div>
+   <div class="status"><b>Metode pembayaran: QRIS All Payment</b><p class="muted">Checkout QRIS belum diaktifkan. Paket tidak akan aktif sebelum pembayaran diverifikasi oleh server.</p></div>
+  </div>
+ </section>
  <section id="page-settings" class="page hidden"><div class="card"><h2>Pilih tema</h2><select id="theme"><option value="dark">Hitam</option><option value="light">Putih</option><option value="purple">Ungu gelap</option><option value="red">Merah</option></select></div></section>
  <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Pengelolaan admin dikunci pada versi gratis tanpa server khusus.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
 </section>
