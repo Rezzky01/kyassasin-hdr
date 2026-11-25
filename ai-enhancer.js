@@ -127,24 +127,28 @@ export async function enhanceImageFile(file, onProgress = () => {}) {
       const input = new ort.Tensor("float32", makeInput(source, width, height, left, top), [1, 3, TILE, TILE]);
       const result = await session.run({[session.inputNames[0]]: input});
       const tensor = result[session.outputNames[0]];
-      const tilePixels = TILE * TILE * 4;
-      const rgba = new Uint8ClampedArray(tilePixels);
-      const plane = TILE * TILE;
+      const dims = tensor.dims;
+      if (!dims || dims.length !== 4 || dims[0] !== 1 || dims[1] !== 3) throw new Error("Format keluaran AI tidak dikenali: " + JSON.stringify(dims));
+      const outHeight = dims[2], outWidth = dims[3], plane = outWidth * outHeight;
+      if (outWidth !== TILE * 4 || outHeight !== TILE * 4) throw new Error("Ukuran hasil AI tidak sesuai: " + outWidth + "x" + outHeight);
+      const rgba = new Uint8ClampedArray(plane * 4);
       for (let i = 0; i < plane; i++) {
-        rgba[i * 4] = Math.max(0, Math.min(255, Math.round(tensor.data[i] * 255)));
-        rgba[i * 4 + 1] = Math.max(0, Math.min(255, Math.round(tensor.data[plane + i] * 255)));
-        rgba[i * 4 + 2] = Math.max(0, Math.min(255, Math.round(tensor.data[plane * 2 + i] * 255)));
-        rgba[i * 4 + 3] = 255;
+        rgba[i*4] = Math.max(0,Math.min(255,Math.round(tensor.data[i]*255)));
+        rgba[i*4+1] = Math.max(0,Math.min(255,Math.round(tensor.data[plane+i]*255)));
+        rgba[i*4+2] = Math.max(0,Math.min(255,Math.round(tensor.data[plane*2+i]*255)));
+        rgba[i*4+3] = 255;
       }
-      const tileImage = new ImageData(rgba, TILE * 4, TILE * 4);
-      const validW = Math.min(TILE, width - left);
-      const validH = Math.min(TILE, height - top);
-      const cropLeft = left === 0 ? 0 : OVERLAP * 4;
-      const cropTop = top === 0 ? 0 : OVERLAP * 4;
-      const cropRight = left + TILE >= width ? validW * 4 : (TILE - OVERLAP) * 4;
-      const cropBottom = top + TILE >= height ? validH * 4 : (TILE - OVERLAP) * 4;
-      outputCtx.putImageData(tileImage, left * 4, top * 4, cropLeft, cropTop,
-        Math.max(1, cropRight - cropLeft), Math.max(1, cropBottom - cropTop));
+      const tileImage = new ImageData(rgba,outWidth,outHeight);
+      const tileCanvas = document.createElement("canvas");
+      tileCanvas.width=outWidth; tileCanvas.height=outHeight;
+      const tileCtx=tileCanvas.getContext("2d"); tileCtx.putImageData(tileImage,0,0);
+      const validW=Math.min(TILE,width-left), validH=Math.min(TILE,height-top);
+      const cropLeft=left===0?0:OVERLAP*4, cropTop=top===0?0:OVERLAP*4;
+      const cropRight=left+TILE>=width?validW*4:(TILE-OVERLAP)*4;
+      const cropBottom=top+TILE>=height?validH*4:(TILE-OVERLAP)*4;
+      const cropWidth=Math.max(1,cropRight-cropLeft), cropHeight=Math.max(1,cropBottom-cropTop);
+      outputCtx.drawImage(tileCanvas,cropLeft,cropTop,cropWidth,cropHeight,
+        (left+(left===0?0:OVERLAP))*4,(top+(top===0?0:OVERLAP))*4,cropWidth,cropHeight);
       completed++;
       onProgress("AI sedang memulihkan detail foto... " + Math.round(completed / totalTiles * 100) + "%");
       await new Promise(resolve => setTimeout(resolve, 0));
