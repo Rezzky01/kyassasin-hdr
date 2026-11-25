@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web";
+import * as ort from "onnxruntime-web/webgpu";
 
 const MODEL_URL = "https://huggingface.co/thisismert/real-esrgan-onnx/resolve/main/onnx/realesr-general-x4v3.onnx";
 const DB_NAME = "kyassasin-ai-models";
@@ -7,6 +7,7 @@ const MODEL_KEY = "realesr-general-x4v3";
 const TILE = 128;
 const OVERLAP = 12;
 let sessionPromise;
+let activeEngine = "wasm";
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -70,9 +71,28 @@ async function getSession(onProgress) {
   if (!sessionPromise) {
     sessionPromise = (async () => {
       ort.env.wasm.wasmPaths = new URL("./", import.meta.url).href;
-      ort.env.wasm.numThreads = 1;
+      const canUseWasmThreads = globalThis.crossOriginIsolated === true && typeof SharedArrayBuffer !== "undefined";
+      ort.env.wasm.numThreads = canUseWasmThreads
+        ? Math.min(4, Math.max(2, Number(navigator.hardwareConcurrency) || 2))
+        : 1;
       ort.env.wasm.proxy = false;
       const model = await loadModel(onProgress);
+      if (navigator.gpu) {
+        try {
+          onProgress?.("GPU terdeteksi. Mengaktifkan akselerasi AI...");
+          const gpuSession = await ort.InferenceSession.create(model, {
+            executionProviders: ["webgpu", "wasm"],
+            graphOptimizationLevel: "all"
+          });
+          activeEngine = "GPU";
+          onProgress?.("Akselerasi GPU aktif. Memulai penjernihan...");
+          return gpuSession;
+        } catch (gpuError) {
+          console.warn("WebGPU tidak tersedia, beralih ke WASM:", gpuError);
+        }
+      }
+      activeEngine = canUseWasmThreads ? "CPU multi-core" : "CPU";
+      onProgress?.("Memakai mesin " + activeEngine + ". Memulai penjernihan...");
       return ort.InferenceSession.create(model, {
         executionProviders: ["wasm"],
         graphOptimizationLevel: "all"
@@ -152,7 +172,7 @@ export async function enhanceImageFile(file, onProgress = () => {}) {
       outputCtx.drawImage(tileCanvas,cropLeft,cropTop,cropWidth,cropHeight,
         (left+(left===0?0:OVERLAP))*4,(top+(top===0?0:OVERLAP))*4,cropWidth,cropHeight);
       completed++;
-      onProgress("AI sedang memulihkan detail foto... " + Math.round(completed / totalTiles * 100) + "%");
+      onProgress("AI " + activeEngine + " memulihkan detail foto... " + Math.round(completed / totalTiles * 100) + "%");
       await new Promise(resolve => setTimeout(resolve, 0));
     }
   }
