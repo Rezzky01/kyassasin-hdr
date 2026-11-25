@@ -20,15 +20,8 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
 </style></head>
 <body><div class="wrap">
 <header class="brand"><h1>KYASSASIN HDR</h1><p>kyassasin dev</p><div class="small">Enhance • Recover • Community</div></header>
-<section id="auth" class="card">
- <div class="tabs"><button id="showLogin">Login</button><button id="showRegister" class="secondary">Daftar email</button><button id="showPhone" class="secondary">Daftar nomor</button></div>
- <div id="loginBox"><h2>Masuk akun</h2><input id="loginEmail" type="email" placeholder="Alamat email" autocomplete="email"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="loginBtn">Login</button><button id="resetBtn" class="secondary">Lupa password? Kirim link reset</button></div>
- <div id="registerBox" class="hidden"><h2>Daftar dengan email</h2><input id="regEmail" type="email" placeholder="Alamat email"><input id="regPass" type="password" minlength="6" placeholder="Password (minimal 6 karakter)"><button id="registerBtn">Buat akun</button><p class="small">Kami akan mengirim link verifikasi ke email kamu.</p></div>
- <div id="phoneBox" class="hidden"><h2>Daftar dengan nomor telepon</h2><input id="phoneNumber" type="tel" placeholder="+628xxxxxxxxxx"><div id="recaptcha-container"></div><button id="sendOtpBtn">Kirim kode OTP</button><input id="otpCode" class="hidden" inputmode="numeric" autocomplete="one-time-code" placeholder="Masukkan kode OTP"><button id="verifyOtpBtn" class="hidden">Verifikasi & masuk</button><p class="small">Gunakan format internasional, contoh +6281234567890. Akun nomor telepon memakai verifikasi OTP; password terpisah belum didukung oleh Firebase Phone Auth.</p></div>
- <div id="authMsg" class="status">Pilih login atau buat akun baru menggunakan email/password maupun nomor telepon/OTP.</div>
-</section>
 <section id="app" class="hidden">
- <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><button class="secondary" id="logout">Keluar</button></div>
+ <div class="card topline"><div><b id="who"></b><div class="small" id="role"></div></div><span class="badge">Mode gratis</span></div>
  <div class="nav"><button data-page="home">Beranda</button><button data-page="chat">Live Chat</button><button data-page="vip">VIP</button><button data-page="admin" id="adminNav" class="hidden">Admin</button><button data-page="settings">Tema</button></div>
  <section id="page-home" class="page">
   <div class="card">
@@ -48,104 +41,41 @@ button{background:linear-gradient(110deg,var(--accent),#b45cff);border:0;font-we
    <p class="muted">Setelah pemrosesan, pilih Bagikan ke WhatsApp Status. Di menu Android pilih WhatsApp, lalu pilih Status saya dan tekan kirim. WhatsApp tetap meminta konfirmasi sebelum Status dipublikasikan.</p>
   </div>
  </section>
- <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna yang sudah login. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
+ <section id="page-chat" class="page hidden"><div class="card"><h2>Live Chat Komunitas</h2><p class="muted">Pesan terlihat oleh pengguna aplikasi. Jangan kirim informasi pribadi.</p><div id="chatlog" class="chatlog"></div><textarea id="chatText" rows="2" maxlength="1000" placeholder="Tulis pesan..."></textarea><button id="sendChat">Kirim pesan</button><div id="chatMsg" class="small"></div></div></section>
  <section id="page-vip" class="page hidden"><div class="card"><h2>Keanggotaan VIP</h2><p id="vipState">Memuat status VIP...</p><p class="muted">Mau VIP? Hubungi admin 6285352860012</p></div></section>
  <section id="page-settings" class="page hidden"><div class="card"><h2>Pilih tema</h2><select id="theme"><option value="dark">Hitam</option><option value="light">Putih</option><option value="purple">Ungu gelap</option><option value="red">Merah</option></select></div></section>
- <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Aksi admin divalidasi oleh Firestore Rules berdasarkan UID administrator.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
+ <section id="page-admin" class="page hidden"><div class="card"><h2>Panel Administrator</h2><p class="muted">Pengelolaan admin dikunci pada versi gratis tanpa server khusus.</p><div id="adminMsg" class="status">Memuat pengguna...</div><div id="usersList"></div></div></section>
 </section>
 <footer class="small" style="text-align:center;padding:16px">KYASSASIN HDR • Web app</footer></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged,reload,setPersistence,browserLocalPersistence,RecaptchaVerifier,signInWithPhoneNumber} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,signInAnonymously,onAuthStateChanged,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,collection,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp,getDocs,updateDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyDGb5F4yI8jTDWxX8B3g8QCkXzAh8Eelts",authDomain:"kyassasin-hdr.firebaseapp.com",projectId:"kyassasin-hdr",storageBucket:"kyassasin-hdr.firebasestorage.app",messagingSenderId:"231929678916",appId:"1:231929678916:web:35fa878e2e53a134670011",measurementId:"G-2KWQKCTXQY"};
 const ADMIN_UID="fxzhHNEoDmOBQfoLxGoI0HPDR4q1";
 const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
-// Simpan sesi login admin di perangkat ini agar tidak perlu login ulang setiap membuka aplikasi.
+// Masuk otomatis tanpa email, password, atau OTP.
 await setPersistence(auth,browserLocalPersistence);
 const $=s=>document.querySelector(s);let currentUser=null,isAdmin=false,unsubChat=null,selectedFile=null,sourceImage=null;
 const say=(id,t)=>$(id).textContent=t;
 
 
-$("#resetBtn").onclick=async()=>{
- const email=$("#loginEmail").value.trim();
- if(!email){say("#authMsg","Masukkan alamat email terlebih dahulu, lalu tekan Lupa password.");return}
- try{await sendPasswordResetEmail(auth,email);say("#authMsg","Link reset password sudah dikirim ke "+email+". Periksa Inbox dan folder Spam.");}
- catch(e){say("#authMsg","Gagal mengirim reset password: "+friendlyError(e))}
-};
-
-function friendlyError(e){
- const code=e?.code||"";
- if(code==="auth/email-already-in-use")return "Email ini sudah terdaftar. Kembali ke Login, masukkan email, lalu tekan Lupa password jika password tidak ingat.";
- if(code==="auth/invalid-email")return "Format email tidak valid.";
- if(code==="auth/weak-password")return "Password minimal 6 karakter.";
- if(code==="auth/invalid-credential"||code==="auth/wrong-password"||code==="auth/user-not-found")return "Email atau password salah. Jika lupa password, gunakan tombol Lupa password.";
- if(code==="auth/too-many-requests")return "Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.";
- if(code==="auth/network-request-failed")return "Koneksi internet bermasalah. Periksa internet lalu coba lagi.";
- return e?.message||"Terjadi kesalahan yang tidak diketahui.";
-}
-
-$("#loginBtn").onclick=async()=>{
- try{await signInWithEmailAndPassword(auth,$("#loginEmail").value.trim(),$("#loginPass").value)}
- catch(e){say("#authMsg","Gagal login: "+friendlyError(e))}
-};
-function showAuth(which){
- $("#loginBox").classList.toggle("hidden",which!=="login");
- $("#registerBox").classList.toggle("hidden",which!=="register");
- $("#phoneBox").classList.toggle("hidden",which!=="phone");
-}
-$("#showLogin").onclick=()=>showAuth("login");
-$("#showRegister").onclick=()=>showAuth("register");
-$("#showPhone").onclick=()=>showAuth("phone");
-$("#registerBtn").onclick=async()=>{
- const email=$("#regEmail").value.trim(),password=$("#regPass").value;
- if(!email||password.length<6){say("#authMsg","Isi email yang valid dan password minimal 6 karakter.");return}
- try{
-  const cred=await createUserWithEmailAndPassword(auth,email,password);
-  await sendEmailVerification(cred.user);
-  await signOut(auth);
-  showAuth("login");
-  say("#authMsg","Akun berhasil dibuat. Buka email untuk verifikasi, lalu login.");
- }catch(e){say("#authMsg","Pendaftaran gagal: "+friendlyError(e))}
-};
-let phoneConfirmation=null,phoneRecaptcha=null;
-$("#sendOtpBtn").onclick=async()=>{
- const phone=$("#phoneNumber").value.trim();
- if(!/^\+[1-9]\d{7,14}$/.test(phone)){say("#authMsg","Nomor harus memakai format internasional, misalnya +6281234567890.");return}
- try{
-  if(!phoneRecaptcha)phoneRecaptcha=new RecaptchaVerifier(auth,"recaptcha-container",{size:"normal"});
-  phoneConfirmation=await signInWithPhoneNumber(auth,phone,phoneRecaptcha);
-  $("#otpCode").classList.remove("hidden");$("#verifyOtpBtn").classList.remove("hidden");
-  say("#authMsg","Kode OTP sudah dikirim melalui SMS. Masukkan kode yang diterima.");
- }catch(e){if(phoneRecaptcha){try{await phoneRecaptcha.clear()}catch{} phoneRecaptcha=null}say("#authMsg","Gagal mengirim OTP: "+friendlyError(e))}
-};
-$("#verifyOtpBtn").onclick=async()=>{
- const code=$("#otpCode").value.trim();
- if(!phoneConfirmation||!/^\d{6}$/.test(code)){say("#authMsg","Masukkan kode OTP 6 digit yang valid.");return}
- try{await phoneConfirmation.confirm(code);say("#authMsg","Nomor berhasil diverifikasi. Akun sedang disiapkan...")}
- catch(e){say("#authMsg","Verifikasi gagal: "+friendlyError(e))}
-};
-
-$("#logout").onclick=()=>signOut(auth);
-
+// Tidak ada tombol keluar: sesi anonim dipertahankan otomatis di perangkat.
+function friendlyError(e){return e?.message||"Terjadi kesalahan. Periksa koneksi internet lalu coba lagi."}
 onAuthStateChanged(auth,async u=>{
  if(unsubChat){unsubChat();unsubChat=null}
- if(!u){currentUser=null;isAdmin=false;$("#auth").classList.remove("hidden");$("#app").classList.add("hidden");return}
- currentUser=u;isAdmin=u.uid===ADMIN_UID;
+ if(!u){currentUser=null;isAdmin=false;$("#app").classList.add("hidden");try{await signInAnonymously(auth)}catch(e){console.error(e)}return}
+ currentUser=u;isAdmin=false;
  try{
-  await reload(u);
-  if(!isAdmin&&u.email&&!u.emailVerified){
-   await signOut(auth);say("#authMsg","Email belum diverifikasi. Buka link verifikasi di email, lalu login kembali.");return
-  }
   const userRef=doc(db,"users",u.uid),snap=await getDoc(userRef);
-  if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:u.email||null,phone:u.phoneNumber||null,loginMethod:u.phoneNumber?"phone":"email",role:isAdmin?"admin":"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
-  else await setDoc(userRef,{email:u.email||null,phone:u.phoneNumber||null,loginMethod:u.phoneNumber?"phone":"email",lastLoginAt:serverTimestamp()},{merge:true});
+  if(!snap.exists())await setDoc(userRef,{uid:u.uid,email:null,phone:null,loginMethod:"anonymous",role:"user",vip:false,blocked:false,createdAt:serverTimestamp()},{merge:true});
+  else await setDoc(userRef,{loginMethod:"anonymous",lastLoginAt:serverTimestamp()},{merge:true});
   const profile=(await getDoc(userRef)).data()||{};
-  if(profile.blocked&&!isAdmin){await signOut(auth);say("#authMsg","Akun ini diblokir. Hubungi admin.");return}
-  $("#auth").classList.add("hidden");$("#app").classList.remove("hidden");$("#who").textContent=u.email||"Pengguna";$("#role").textContent=isAdmin?"Administrator":(profile.vip?"Pengguna VIP":"Pengguna terverifikasi");
-  $("#adminNav").classList.toggle("hidden",!isAdmin);say("#vipState",profile.vip?"Status: VIP aktif":"Status: pengguna reguler");
-  if(isAdmin)loadUsers();startChat();
- }catch(e){say("#authMsg","Tidak dapat memuat profil: "+friendlyError(e))}
+  if(profile.blocked){$("#app").classList.add("hidden");return}
+  $("#app").classList.remove("hidden");$("#who").textContent="Pengguna";$("#role").textContent="Masuk otomatis • Akun anonim";
+  $("#adminNav").classList.add("hidden");say("#vipState","Status: pengguna reguler. Hubungi admin untuk informasi VIP.");
+  startChat();
+ }catch(e){console.error("Gagal memuat profil:",e);$("#app").classList.add("hidden")}
 });
 
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
@@ -170,7 +100,7 @@ function startChat(){
 }
 $("#sendChat").onclick=async()=>{
  let text=$("#chatText").value.trim();if(!text)return;
- try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:currentUser.email,text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}
+ try{await addDoc(collection(db,"messages"),{uid:currentUser.uid,email:null,text,createdAt:serverTimestamp()});$("#chatText").value="";say("#chatMsg","Pesan terkirim.")}
  catch(e){say("#chatMsg","Tidak dapat mengirim: "+friendlyError(e))}
 };
 
